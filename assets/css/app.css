@@ -105,3 +105,13 @@
 .sidebar {
     transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
+
+/* --- Collapsible Advanced Options Fix by Jules --- */
+.advanced-options-content.collapsed {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    overflow: hidden;
+}

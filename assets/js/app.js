@@ -510,7 +510,7 @@ async function decodeSingleMessage(src, { showToasts = true } = {}) {
     }
 }
 
-async function decodeText() {
+async function handleUniversalDecode() {
     const inputText = $('inputText');
     const output = $('output');
 
@@ -525,54 +525,24 @@ async function decodeText() {
         return;
     }
 
-    showToast('جاري فك التشفير...', 'info', 1000);
-
-    const result = await decodeSingleMessage(src);
-
-    if (result && result.text !== null) {
-        output.value = result.text;
-        output.classList.add('has-content');
-
-        updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
-
-        if (appSettings.autoCopyDecodedText) {
-            await copyToClipboard(result.text);
-            showToast(`تم فك تشفير النص ونسخ النتيجة تلقائياً`, 'success');
-        } else {
-            showToast(`تم فك تشفير النص بنجاح`, 'success');
-        }
-
-        showResultsSection();
-    }
-}
-
-async function decodeMultipleText() {
-    const inputText = $('inputText');
-    const output = $('output');
-
-    if (!inputText || !output) {
-        showToast('عناصر الواجهة غير متوفرة', 'error');
-        return;
-    }
-
-    const src = inputText.value.trim();
-    if (!src) {
-        showToast('يرجى إدخال نص مشفر', 'error');
-        return;
-    }
-
-    showToast('جاري البحث عن رسائل متعددة...', 'info');
+    showToast('جاري فك التشفير...', 'info');
 
     const emojiRegex = new RegExp(`(${emojiList.map(e => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
-
     const matches = [...src.matchAll(emojiRegex)];
 
     if (matches.length === 0) {
-        showToast('لم يتم العثور على أي إيموجي معروف للبدء به.', 'error');
+        // If no known emoji is found, try to decode the whole thing as a single message
+        const result = await decodeSingleMessage(src);
+        if (result && result.text !== null) {
+            output.value = result.text;
+            output.classList.add('has-content');
+            updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
+            showToast(`تم فك تشفير النص بنجاح`, 'success');
+            showResultsSection();
+        }
         return;
     }
 
-    let decodedCount = 0;
     let decodedOutputs = [];
     let totalOriginalSize = 0;
     let totalCompressedSize = 0;
@@ -583,7 +553,6 @@ async function decodeMultipleText() {
             const result = await decodeSingleMessage(potentialMessage, { showToasts: false });
             if (result && result.text) {
                 decodedOutputs.push(result.text);
-                decodedCount++;
                 totalOriginalSize += result.stats.originalSize || 0;
                 totalCompressedSize += result.stats.compressedSize || 0;
             }
@@ -596,11 +565,11 @@ async function decodeMultipleText() {
         }
     }
 
-    if (decodedCount > 0) {
-        output.value = `--- تم العثور على ${decodedCount} رسالة ---\n\n` + decodedOutputs.join('\n\n----------\n\n');
+    if (decodedOutputs.length > 0) {
+        output.value = decodedOutputs.join('\n\n');
         output.classList.add('has-content');
         updateStats(totalOriginalSize, totalCompressedSize, output.value.length);
-        showToast(`تم فك تشفير ${decodedCount} رسالة بنجاح.`, 'success');
+        showToast(`تم فك تشفير ${decodedOutputs.length} رسالة بنجاح.`, 'success');
         showResultsSection();
     } else {
         showToast('تم البحث ولكن لم يتم العثور على رسائل مشفرة صالحة.', 'warning');
@@ -1266,11 +1235,9 @@ function setupEventListeners() {
     // Encode/Decode buttons
     const encodeBtn = $('encodeBtn');
     const decodeBtn = $('decodeBtn');
-    const decodeMultipleBtn = $('decodeMultipleBtn');
 
     if (encodeBtn) encodeBtn.addEventListener('click', encodeText);
-    if (decodeBtn) decodeBtn.addEventListener('click', decodeText);
-    if (decodeMultipleBtn) decodeMultipleBtn.addEventListener('click', decodeMultipleText);
+    if (decodeBtn) decodeBtn.addEventListener('click', handleUniversalDecode);
 
     // Input action buttons
     const deleteBtn = $('deleteBtn');
@@ -1433,6 +1400,18 @@ function setupEventListeners() {
         });
     }
 
+    // Advanced options toggle
+    const advancedOptionsToggle = $('advancedOptionsToggle');
+    if (advancedOptionsToggle) {
+        advancedOptionsToggle.addEventListener('click', () => {
+            const content = document.querySelector('.advanced-options-content');
+            if (content) {
+                content.classList.toggle('collapsed');
+                advancedOptionsToggle.classList.toggle('collapsed');
+            }
+        });
+    }
+
     if (showNotifications) {
         showNotifications.addEventListener('change', (e) => {
             appSettings.showNotifications = e.target.checked;
@@ -1544,7 +1523,7 @@ function setupEventListeners() {
 
         if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Enter') {
             e.preventDefault();
-            decodeText();
+            handleUniversalDecode();
         }
 
         if (e.key === 'Escape') {
