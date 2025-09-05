@@ -1715,6 +1715,20 @@ function setupEventListeners() {
 
 // ========== Additional Functions ==========
 
+function animateEmojiGrid() {
+    const sliderContainer = document.querySelector('.emoji-slider-container');
+    if (sliderContainer) {
+        setTimeout(() => {
+            // Instantly scroll down a bit
+            sliderContainer.scrollTop = 50;
+            // Then smoothly scroll back to the top
+            setTimeout(() => {
+                sliderContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 300);
+        }, 800); // Wait a bit after app load
+    }
+}
+
 function checkPasswordStrength() {
     const passwordInput = $('password');
     const strengthIndicator = $('passwordStrength');
@@ -1844,6 +1858,8 @@ async function initApp() {
 
         console.log('Enhanced Emoji Cipher Pro with Multi-Emoji Support initialized successfully!');
         showToast('تم تحميل التطبيق المحسن مع دعم عدّة إيموجي بنجاح', 'success');
+
+        animateEmojiGrid();
 
     } catch (error) {
         console.error('Error initializing app:', error);
