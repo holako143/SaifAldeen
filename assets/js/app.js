@@ -3,7 +3,7 @@
 
 // ========== Global Variables ==========
 const $ = (id) => document.getElementById(id);
-const defaultEmojis = ['😎', '✨', '❤️', '🔒', '🔥', '🌟', '🎯', '💡', '🚀', '💎', '📌', '✅', '⚡', '🌈', '🌠'];
+const defaultEmojis = ['😎', '✨', '❤️', '🔒', '🔥', '🌟', '🎯', '💡', '🚀', '💎', '📌', '✅', '⚡', '🌈', '🌠', '🔑', '🎉', '🎁', '🎈', '📁', '✉️', '🌍', '💻', '📱', '🛡️'];
 
 // QR Code Globals
 let qrcode = null;
@@ -1333,6 +1333,11 @@ function setupEventListeners() {
     }
 
     // Navigation buttons
+    const logo = document.querySelector('.logo');
+    if (logo) {
+        logo.style.cursor = 'pointer';
+        logo.addEventListener('click', () => switchTab('cipher'));
+    }
     const menuToggle = $('menuToggle');
     const closeSidebarBtn = $('closeSidebar');
     const resetBtn = $('resetBtn');
@@ -1792,6 +1797,14 @@ function applySettings() {
 
 async function initApp() {
     try {
+        // Collapse advanced options by default
+        const advancedOptionsToggle = $('advancedOptionsToggle');
+        const advancedOptionsContent = document.querySelector('.advanced-options-content');
+        if (advancedOptionsToggle && advancedOptionsContent) {
+            advancedOptionsToggle.classList.add('collapsed');
+            advancedOptionsContent.classList.add('collapsed');
+        }
+
         console.log('Initializing Enhanced Emoji Cipher Pro with Multi-Emoji Support...');
 
         loadSettings();
