@@ -5,11 +5,6 @@
 const $ = (id) => document.getElementById(id);
 const defaultEmojis = ['😎', '✨', '❤️', '🔒', '🔥', '🌟', '🎯', '💡', '🚀', '💎', '📌', '✅', '⚡', '🌈', '🌠'];
 
-// QR Code Globals
-let qrcode = null;
-let videoStream = null;
-let animationFrameId = null;
-
 // ========== Helper Functions ==========
 // Helper functions for robust Base64 encoding/decoding to handle binary data correctly
 function bytesToBase64(bytes) {
@@ -849,17 +844,14 @@ async function copyToClipboard(text = null) {
 
     try {
         await navigator.clipboard.writeText(textToCopy);
-        if (!text) showToast('تم نسخ النص إلى الحافظة');
+        showToast('تم نسخ النص إلى الحافظة', 'success');
 
         const copyBtn = $('copyBtn');
-        if (copyBtn && !text) {
-            const originalText = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="fas fa-check"></i> تم النسخ';
-            copyBtn.style.background = '#10b981';
-
+        if (copyBtn) {
+            const originalIcon = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
             setTimeout(() => {
-                copyBtn.innerHTML = originalText;
-                copyBtn.style.background = '';
+                copyBtn.innerHTML = originalIcon;
             }, 2000);
         }
     } catch (error) {
@@ -952,26 +944,26 @@ function renderCustomEmojiList() {
         return;
     }
 
-    emojiList.forEach(emoji => {
+    emojiList.forEach((emoji, index) => {
         const emojiRow = document.createElement('div');
-        emojiRow.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: rgba(255,255,255,0.8); border-radius: 0.75rem; margin-bottom: 0.5rem; border: 1px solid rgba(226,232,240,0.5);';
+        emojiRow.className = 'emoji-manage-item';
+        emojiRow.setAttribute('draggable', 'true');
+        emojiRow.setAttribute('data-index', index);
 
         emojiRow.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.5rem;">${emoji}</span>
+            <div class="emoji-info">
+                <i class="fas fa-grip-vertical drag-handle"></i>
+                <span class="emoji-char">${emoji}</span>
             </div>
-            <button style="color: #ef4444; background: none; border: none; padding: 0.5rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" title="حذف الإيموجي">
+            <button class="delete-emoji-btn" title="حذف الإيموجي">
                 <i class="fas fa-trash"></i>
             </button>
         `;
 
-        const deleteBtn = emojiRow.querySelector('button');
-        deleteBtn.addEventListener('click', () => removeEmoji(emoji));
-        deleteBtn.addEventListener('mouseenter', () => {
-            deleteBtn.style.background = 'rgba(239, 68, 68, 0.1)';
-        });
-        deleteBtn.addEventListener('mouseleave', () => {
-            deleteBtn.style.background = 'none';
+        const deleteBtn = emojiRow.querySelector('.delete-emoji-btn');
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeEmoji(emoji);
         });
 
         customEmojiList.appendChild(emojiRow);
@@ -1009,6 +1001,22 @@ function addToHistory(text, result, operation) {
     renderHistory();
 }
 
+async function shareHistoryItem(content) {
+    const title = 'Emoji Cipher Pro - نص مشفر';
+    try {
+        if (navigator.share) {
+            await navigator.share({ title, text: content });
+            showToast('تم فتح نافذة المشاركة', 'success');
+        } else {
+            await copyToClipboard(content);
+            showToast('تم نسخ المحتوى، المشاركة غير مدعومة', 'info');
+        }
+    } catch (error) {
+        console.error('Share error:', error);
+        showToast('حدث خطأ أثناء المشاركة', 'error');
+    }
+}
+
 function renderHistory() {
     const historyList = $('historyList');
     const emptyHistory = $('emptyHistory');
@@ -1029,21 +1037,27 @@ function renderHistory() {
 
     historyItems.forEach(item => {
         const historyItem = document.createElement('div');
-        historyItem.style.cssText = 'background: rgba(248,250,252,0.8); padding: 1rem; border-radius: 0.75rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(226,232,240,0.5);';
+        historyItem.className = 'history-item';
 
         const date = new Date(item.timestamp).toLocaleString('ar-EG');
         historyItem.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div style="flex: 1;">
-                    <div style="font-size: 0.875rem; color: #64748b;">${date}</div>
-                    <div style="font-weight: 500; margin: 0.25rem 0;">${item.text}${item.text.length >= 100 ? '...' : ''}</div>
-                    <div style="font-size: 0.75rem; color: #64748b;">تشفير</div>
+            <div class="history-item-main">
+                <div class="history-item-info">
+                    <div class="history-item-date">${date}</div>
+                    <div class="history-item-text">${item.text}${item.text.length >= 100 ? '...' : ''}</div>
+                    <div class="history-item-op">تشفير</div>
                 </div>
-                <div style="font-size: 1.5rem;">${item.result.substring(0, 1)}</div>
+                <div class="history-item-emoji">${item.result.substring(0, 1)}</div>
+            </div>
+            <div class="history-item-actions">
+                <button class="icon-btn-sm copy-history-btn"><i class="far fa-copy"></i></button>
+                <button class="icon-btn-sm share-history-btn"><i class="fas fa-share-alt"></i></button>
+                <button class="icon-btn-sm restore-history-btn"><i class="fas fa-redo"></i></button>
             </div>
         `;
 
-        historyItem.addEventListener('click', () => {
+        historyItem.querySelector('.restore-history-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
             const inputText = $('inputText');
             if (inputText) {
                 inputText.value = item.result;
@@ -1053,14 +1067,14 @@ function renderHistory() {
             }
         });
 
-        historyItem.addEventListener('mouseenter', () => {
-            historyItem.style.background = 'rgba(241,245,249,0.9)';
-            historyItem.style.transform = 'translateX(-3px)';
+        historyItem.querySelector('.copy-history-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyToClipboard(item.result);
         });
 
-        historyItem.addEventListener('mouseleave', () => {
-            historyItem.style.background = 'rgba(248,250,252,0.8)';
-            historyItem.style.transform = 'translateX(0)';
+        historyItem.querySelector('.share-history-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            shareHistoryItem(item.result);
         });
 
         historyList.appendChild(historyItem);
@@ -1260,9 +1274,113 @@ function loadHistory() {
     }
 }
 
+// ========== Drag and Drop for Emoji Management ==========
+
+function setupDragAndDrop() {
+    const customEmojiList = $('customEmojiList');
+    if (!customEmojiList) return;
+
+    let dragSrcEl = null;
+
+    function handleDragStart(e) {
+        this.classList.add('dragging');
+        dragSrcEl = this;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', this.getAttribute('data-index'));
+    }
+
+    function handleDragOver(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+
+    function handleDragEnter(e) {
+        const target = this.closest('.emoji-manage-item');
+        if (target) {
+            target.classList.add('over');
+        }
+    }
+
+    function handleDragLeave(e) {
+        const target = this.closest('.emoji-manage-item');
+        if (target) {
+            target.classList.remove('over');
+        }
+    }
+
+    function handleDrop(e) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+
+        if (dragSrcEl !== this) {
+            const srcIndex = parseInt(dragSrcEl.getAttribute('data-index'));
+            const dropIndex = parseInt(this.getAttribute('data-index'));
+
+            const [removed] = emojiList.splice(srcIndex, 1);
+            emojiList.splice(dropIndex, 0, removed);
+
+            saveEmojis();
+            renderEmojis();
+            showToast('تم تحديث ترتيب الإيموجي', 'success');
+        }
+        return false;
+    }
+
+    function handleDragEnd(e) {
+        document.querySelectorAll('.emoji-manage-item').forEach(item => {
+            item.classList.remove('over');
+            item.classList.remove('dragging');
+        });
+    }
+
+    // Use event delegation
+    customEmojiList.addEventListener('dragstart', function(e) {
+        const target = e.target.closest('.emoji-manage-item');
+        if (target) {
+            handleDragStart.call(target, e);
+        }
+    });
+
+    customEmojiList.addEventListener('dragenter', function(e) {
+        const target = e.target.closest('.emoji-manage-item');
+        if (target && target !== dragSrcEl) {
+            handleDragEnter.call(target, e);
+        }
+    });
+
+    customEmojiList.addEventListener('dragover', handleDragOver);
+
+    customEmojiList.addEventListener('dragleave', function(e) {
+        const target = e.target.closest('.emoji-manage-item');
+        if (target) {
+            handleDragLeave.call(target, e);
+        }
+    });
+
+    customEmojiList.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const target = e.target.closest('.emoji-manage-item');
+        if (target) {
+            handleDrop.call(target, e);
+        }
+    });
+
+    customEmojiList.addEventListener('dragend', function(e) {
+        const target = e.target.closest('.emoji-manage-item');
+        if (target) {
+            handleDragEnd.call(target, e);
+        }
+    });
+}
+
 // ========== Event Setup ==========
 
 function setupEventListeners() {
+    setupDragAndDrop();
     // Encode/Decode buttons
     const encodeBtn = $('encodeBtn');
     const decodeBtn = $('decodeBtn');
@@ -1275,36 +1393,9 @@ function setupEventListeners() {
     // Input action buttons
     const deleteBtn = $('deleteBtn');
     const pasteBtn = $('pasteBtn');
-    const qrBtn = $('qrBtn');
 
     if (deleteBtn) deleteBtn.addEventListener('click', clearInput);
     if (pasteBtn) pasteBtn.addEventListener('click', pasteFromClipboard);
-    if (qrBtn) qrBtn.addEventListener('click', handleQrButtonClick);
-
-    // QR Modal listeners
-    const closeQrModal = $('closeQrModal');
-    const closeScannerModal = $('closeScannerModal');
-    const qrModal = $('qrModal');
-    const scannerModal = $('scannerModal');
-
-    if (closeQrModal) closeQrModal.addEventListener('click', () => qrModal.classList.add('hidden'));
-    if (closeScannerModal) closeScannerModal.addEventListener('click', stopScanner);
-
-    // Close modal on overlay click
-    if (qrModal) {
-        qrModal.addEventListener('click', (e) => {
-            if (e.target === qrModal) {
-                qrModal.classList.add('hidden');
-            }
-        });
-    }
-    if (scannerModal) {
-        scannerModal.addEventListener('click', (e) => {
-            if (e.target === scannerModal) {
-                stopScanner();
-            }
-        });
-    }
 
     // Text input monitoring
     const inputText = $('inputText');
@@ -1333,6 +1424,12 @@ function setupEventListeners() {
     }
 
     // Navigation buttons
+    const logo = document.querySelector('.logo');
+    if (logo) {
+        logo.addEventListener('click', () => {
+            switchTab('cipher');
+        });
+    }
     const menuToggle = $('menuToggle');
     const closeSidebarBtn = $('closeSidebar');
     const resetBtn = $('resetBtn');
@@ -1649,123 +1746,6 @@ async function pasteFromClipboard() {
     }
 }
 
-function handleQrButtonClick() {
-    const output = $('output');
-    if (output && output.value.trim() !== '') {
-        generateQRCode();
-    } else {
-        openScanner();
-    }
-}
-
-function generateQRCode() {
-    const output = $('output');
-    const qrContainer = $('qrcode-container');
-    const qrModal = $('qrModal');
-    if (!output || !qrContainer || !qrModal) return;
-
-    const text = output.value;
-    if (text.length === 0) {
-        showToast('لا يوجد محتوى لإنشاء رمز QR', 'warning');
-        return;
-    }
-
-    qrContainer.innerHTML = ''; // Clear previous QR code
-
-    try {
-        qrcode = new QRCode(qrContainer, {
-            text: text,
-            width: 256,
-            height: 256,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-        });
-        qrModal.classList.remove('hidden');
-    } catch (err) {
-        console.error("QR Code generation failed: ", err);
-        showToast('فشل في إنشاء رمز QR', 'error');
-    }
-}
-
-function openScanner() {
-    const scannerModal = $('scannerModal');
-    const video = $('scannerVideo');
-    const scannerMessage = $('scannerMessage');
-
-    if (!scannerModal || !video || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showToast('متصفحك لا يدعم الوصول للكاميرا.', 'error');
-        return;
-    }
-
-    scannerModal.classList.remove('hidden');
-    scannerMessage.textContent = 'جاري طلب الوصول إلى الكاميرا...';
-
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-        .then(function(stream) {
-            videoStream = stream;
-            video.srcObject = stream;
-            video.play();
-            scannerMessage.textContent = 'وجّه الكاميرا نحو رمز QR';
-            animationFrameId = requestAnimationFrame(tick);
-        })
-        .catch(function(err) {
-            console.error("Error accessing camera: ", err);
-            scannerMessage.textContent = 'فشل الوصول إلى الكاميرا. يرجى منح الإذن.';
-            showToast('فشل الوصول إلى الكاميرا', 'error');
-        });
-}
-
-function stopScanner() {
-    if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-        videoStream = null;
-    }
-    if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-    }
-    const scannerModal = $('scannerModal');
-    if (scannerModal) {
-        scannerModal.classList.add('hidden');
-    }
-}
-
-function tick() {
-    const video = $('scannerVideo');
-    const canvasElement = $('scannerCanvas');
-    const canvas = canvasElement.getContext('2d');
-    const inputText = $('inputText');
-    const scannerMessage = $('scannerMessage');
-
-    if (!video || !canvasElement || !inputText || !scannerMessage) return;
-
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvasElement.height = video.videoHeight;
-        canvasElement.width = video.videoWidth;
-        canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-
-        try {
-            const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                inversionAttempts: "dontInvert",
-            });
-
-            if (code && code.data) {
-                scannerMessage.textContent = `تم العثور على رمز!`;
-                showToast('تم العثور على رمز QR بنجاح!', 'success');
-                inputText.value = code.data;
-                updateCharCount();
-                stopScanner();
-                return;
-            }
-        } catch (e) {
-            console.error("jsQR error: ", e);
-        }
-    }
-    animationFrameId = requestAnimationFrame(tick);
-}
-
 function applySettings() {
     applyTheme();
     changeFontSize(appSettings.fontSize);
@@ -1815,7 +1795,7 @@ async function initApp() {
         });
 
         console.log('Enhanced Emoji Cipher Pro with Multi-Emoji Support initialized successfully!');
-        showToast('تم تحميل التطبيق المحسن مع دعم عدة إيموجي بنجاح', 'success');
+        showToast('تم تحميل التطبيق المحسن مع دعم عدّة إيموجي بنجاح', 'success');
 
     } catch (error) {
         console.error('Error initializing app:', error);
