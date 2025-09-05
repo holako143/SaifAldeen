@@ -72,6 +72,7 @@
 .fa-eye-slash::before { content: "\f070"; }
 .fa-grip-vertical::before { content: "\f58d"; }
 .fa-share-alt::before { content: "\f1e0"; }
+.fa-paste::before { content: "\f0ea"; }
 
 /* ========== CSS Variables ========== */
 :root {
