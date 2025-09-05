@@ -328,7 +328,7 @@ async function encodeText() {
         const useCompression = $('useCompression')?.checked ?? true;
         const useEncryption = $('useEncrypt')?.checked ?? false;
         const password = $('password')?.value ?? '';
-
+        
         let payloadBytes;
         if (useCompression) {
             payloadBytes = AdvancedCompression.compress(text);
@@ -345,7 +345,7 @@ async function encodeText() {
             );
             payloadBytes = encryptionData.encrypted;
         }
-
+        
         const header = {
             version: 2,
             timestamp: Date.now(),
@@ -360,7 +360,7 @@ async function encodeText() {
             algorithm: 'AES-GCM-256',
             encoding: 'UTF-8'
         };
-
+        
         const headerJson = JSON.stringify(header);
         const headerBytes = encoder.encode(headerJson);
 
@@ -1154,7 +1154,7 @@ function toggleTheme() {
     saveSettings();
 
     const themeNames = { 'auto': 'تلقائي', 'dark': 'داكن', 'light': 'فاتح' };
-    showToast(`تم تغيير الثيم إلى: ${themeNames[appSettings.theme]}`);
+    showToast(`��م تغيير الثيم إلى: ${themeNames[appSettings.theme]}`);
 }
 
 function applyTheme() {
@@ -1266,9 +1266,11 @@ function setupEventListeners() {
     // Encode/Decode buttons
     const encodeBtn = $('encodeBtn');
     const decodeBtn = $('decodeBtn');
+    const decodeMultipleBtn = $('decodeMultipleBtn');
 
     if (encodeBtn) encodeBtn.addEventListener('click', encodeText);
-    if (decodeBtn) decodeBtn.addEventListener('click', handleUniversalDecode);
+    if (decodeBtn) decodeBtn.addEventListener('click', decodeText);
+    if (decodeMultipleBtn) decodeMultipleBtn.addEventListener('click', decodeMultipleText);
 
     // Input action buttons
     const deleteBtn = $('deleteBtn');
@@ -1331,11 +1333,6 @@ function setupEventListeners() {
     }
 
     // Navigation buttons
-    const logo = document.querySelector('.logo');
-    if (logo) {
-        logo.style.cursor = 'pointer';
-        logo.addEventListener('click', () => switchTab('cipher'));
-    }
     const menuToggle = $('menuToggle');
     const closeSidebarBtn = $('closeSidebar');
     const resetBtn = $('resetBtn');
@@ -1428,18 +1425,6 @@ function setupEventListeners() {
         autoCopyEncodedEmoji.addEventListener('change', (e) => {
             appSettings.autoCopyEncodedEmoji = e.target.checked;
             saveSettings();
-        });
-    }
-
-    // Advanced options toggle
-    const advancedOptionsToggle = $('advancedOptionsToggle');
-    if (advancedOptionsToggle) {
-        advancedOptionsToggle.addEventListener('click', () => {
-            const content = document.querySelector('.advanced-options-content');
-            if (content) {
-                content.classList.toggle('collapsed');
-                advancedOptionsToggle.classList.toggle('collapsed');
-            }
         });
     }
 
@@ -1554,7 +1539,7 @@ function setupEventListeners() {
 
         if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Enter') {
             e.preventDefault();
-            handleUniversalDecode();
+            decodeText();
         }
 
         if (e.key === 'Escape') {
@@ -1807,14 +1792,6 @@ function applySettings() {
 
 async function initApp() {
     try {
-        // Collapse advanced options by default
-        const advancedOptionsToggle = $('advancedOptionsToggle');
-        const advancedOptionsContent = document.querySelector('.advanced-options-content');
-        if (advancedOptionsToggle && advancedOptionsContent) {
-            advancedOptionsToggle.classList.add('collapsed');
-            advancedOptionsContent.classList.add('collapsed');
-        }
-
         console.log('Initializing Enhanced Emoji Cipher Pro with Multi-Emoji Support...');
 
         loadSettings();
