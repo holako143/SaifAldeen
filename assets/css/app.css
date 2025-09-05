@@ -66,3 +66,42 @@
   animation: shake 0.4s ease-in-out;
   border-color: var(--error) !important;
 }
+
+/* --- Emoji Slider Improvements by Jules (Phase 1) --- */
+
+/* Enlarge emoji, remove background */
+.emoji-item {
+    font-size: 2.5rem !important;
+    min-width: 70px !important;
+    height: 70px !important;
+    background: transparent !important;
+}
+
+/* New hover effect with glow */
+.emoji-item:hover {
+    transform: scale(1.2) !important;
+    text-shadow: 0 0 10px var(--primary);
+    /* Resetting other hover effects */
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* New active effect with stronger glow */
+.emoji-item.active {
+    transform: scale(1.3) !important;
+    color: var(--primary) !important;
+    text-shadow: 0 0 15px var(--primary);
+    /* Resetting other active effects */
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Hide slider arrow controls, overriding media query */
+.slider-control {
+    display: none !important;
+}
+
+/* --- Sidebar Animation Improvement by Jules --- */
+.sidebar {
+    transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
