@@ -163,7 +163,7 @@ class AdvancedCompression {
                 count++;
             }
 
-            if (count > 3) {
+            if (count > 3 || current === 255) {
                 result.push(255, count, current);
             } else {
                 for (let j = 0; j < count; j++) {

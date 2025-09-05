@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Compression Test</title>
+</head>
+<body>
+    <h1>Testing AdvancedCompression</h1>
+    <p>Check the console for test results.</p>
+
+    <script>
+        console.log("Starting compression tests...");
+
+        // Helper to compare two Uint8Arrays
+        function arraysAreEqual(a, b) {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) return false;
+            }
+            return true;
+        }
+
+        // --- Original Buggy AdvancedCompression Class ---
+        class BuggyAdvancedCompression {
+            static simpleCompress(data) {
+                const result = [];
+                let i = 0;
+                while (i < data.length) {
+                    const current = data[i];
+                    let count = 1;
+                    while (i + count < data.length && data[i + count] === current && count < 255) {
+                        count++;
+                    }
+                    if (count > 3) {
+                        result.push(255, count, current);
+                    } else {
+                        for (let j = 0; j < count; j++) {
+                            result.push(current);
+                        }
+                    }
+                    i += count;
+                }
+                return new Uint8Array(result);
+            }
+
+            static simpleDecompress(data) {
+                const result = [];
+                let i = 0;
+                while (i < data.length) {
+                    if (data[i] === 255 && i + 2 < data.length) {
+                        const count = data[i + 1];
+                        const value = data[i + 2];
+                        for (let j = 0; j < count; j++) {
+                            result.push(value);
+                        }
+                        i += 3;
+                    } else {
+                        result.push(data[i]);
+                        i++;
+                    }
+                }
+                return new Uint8Array(result);
+            }
+        }
+
+        // --- Fixed AdvancedCompression Class ---
+        class FixedAdvancedCompression {
+            static simpleCompress(data) {
+                const result = [];
+                let i = 0;
+                while (i < data.length) {
+                    const current = data[i];
+                    let count = 1;
+                    while (i + count < data.length && data[i + count] === current && count < 255) {
+                        count++;
+                    }
+                    if (count > 3 || current === 255) {
+                        result.push(255, count, current);
+                    } else {
+                        for (let j = 0; j < count; j++) {
+                            result.push(current);
+                        }
+                    }
+                    i += count;
+                }
+                return new Uint8Array(result);
+            }
+
+            static simpleDecompress(data) {
+                const result = [];
+                let i = 0;
+                while (i < data.length) {
+                    if (data[i] === 255 && i + 2 < data.length) {
+                        const count = data[i + 1];
+                        const value = data[i + 2];
+                        for (let j = 0; j < count; j++) {
+                            result.push(value);
+                        }
+                        i += 3;
+                    } else {
+                        result.push(data[i]);
+                        i++;
+                    }
+                }
+                return new Uint8Array(result);
+            }
+        }
+
+        // --- Test Cases ---
+        const testDataWith255 = new Uint8Array([10, 20, 255, 30, 40]);
+        const testDataLongRun = new Uint8Array([5, 5, 5, 5, 5, 6, 7]);
+        const testDataWith255Run = new Uint8Array([1, 255, 255, 255, 2]);
+
+        // --- Running Tests ---
+
+        // Test 1: Verify the bug with the original code
+        console.log("--- Test 1: Buggy Version ---");
+        const buggyCompressed = BuggyAdvancedCompression.simpleCompress(testDataWith255);
+        const buggyDecompressed = BuggyAdvancedCompression.simpleDecompress(buggyCompressed);
+        const isBuggyCorrect = arraysAreEqual(testDataWith255, buggyDecompressed);
+        console.log("Original Data: ", testDataWith255);
+        console.log("Compressed by Buggy: ", buggyCompressed);
+        console.log("Decompressed by Buggy: ", buggyDecompressed);
+        console.assert(!isBuggyCorrect, "BUG VERIFIED: The decompressed data does NOT match the original.");
+        if (!isBuggyCorrect) {
+            console.log("%cSUCCESS: Bug is reproduced as expected.", "color: red;");
+        } else {
+            console.error("FAILURE: Bug could not be reproduced.");
+        }
+
+
+        // Test 2: Verify the fix with the new code
+        console.log("\n--- Test 2: Fixed Version ---");
+        const fixedCompressed = FixedAdvancedCompression.simpleCompress(testDataWith255);
+        const fixedDecompressed = FixedAdvancedCompression.simpleDecompress(fixedCompressed);
+        const isFixedCorrect = arraysAreEqual(testDataWith255, fixedDecompressed);
+        console.log("Original Data: ", testDataWith255);
+        console.log("Compressed by Fixed: ", fixedCompressed);
+        console.log("Decompressed by Fixed: ", fixedDecompressed);
+        console.assert(isFixedCorrect, "FIX VERIFICATION FAILED: The decompressed data does not match the original.");
+        if (isFixedCorrect) {
+            console.log("%cSUCCESS: Fix is verified. Data is correctly handled.", "color: green;");
+        } else {
+             console.error("FAILURE: Fix is not working.");
+        }
+
+        // Test 3: Verify long run compression still works
+        console.log("\n--- Test 3: Long Run Sanity Check ---");
+        const fixedCompressedRun = FixedAdvancedCompression.simpleCompress(testDataLongRun);
+        const fixedDecompressedRun = FixedAdvancedCompression.simpleDecompress(fixedCompressedRun);
+        const isRunCorrect = arraysAreEqual(testDataLongRun, fixedDecompressedRun);
+        console.log("Original Data: ", testDataLongRun);
+        console.log("Decompressed by Fixed: ", fixedDecompressedRun);
+        console.assert(isRunCorrect, "SANITY CHECK FAILED: Long run compression is broken.");
+         if (isRunCorrect) {
+            console.log("%cSUCCESS: Long run compression is still working correctly.", "color: green;");
+        } else {
+             console.error("FAILURE: Long run compression is broken.");
+        }
+
+        // Test 4: Verify run of 255 bytes
+        console.log("\n--- Test 4: Run of 255 bytes ---");
+        const fixedCompressed255Run = FixedAdvancedCompression.simpleCompress(testDataWith255Run);
+        const fixedDecompressed255Run = FixedAdvancedCompression.simpleDecompress(fixedCompressed255Run);
+        const is255RunCorrect = arraysAreEqual(testDataWith255Run, fixedDecompressed255Run);
+        console.log("Original Data: ", testDataWith255Run);
+        console.log("Compressed by Fixed: ", fixedCompressed255Run);
+        console.log("Decompressed by Fixed: ", fixedDecompressed255Run);
+        console.assert(is255RunCorrect, "255-RUN TEST FAILED: A run of 255 bytes is not handled correctly.");
+         if (is255RunCorrect) {
+            console.log("%cSUCCESS: A run of 255 bytes is correctly handled.", "color: green;");
+        } else {
+             console.error("FAILURE: A run of 255 bytes is not handled correctly.");
+        }
+
+    </script>
+</body>
+</html>
