@@ -1,14 +1,16 @@
-const CACHE_NAME = 'emoji-cipher-pro-cache-v3';
+const CACHE_NAME = 'emoji-cipher-pro-cache-v4';
 const urlsToCache = [
   '/',
   'index.html',
   'manifest.json',
   'assets/css/app.css',
-  'assets/js/bundle.js',
+  'assets/js/app.js',
   'assets/fonts/fa-brands-400.woff2',
   'assets/fonts/fa-regular-400.woff2',
   'assets/fonts/fa-solid-900.woff2',
-  'assets/icons/icon-128x128.png'
+  'assets/icons/icon-128x128.png',
+  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+  'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'
 ];
 
 self.addEventListener('install', event => {
