@@ -70,6 +70,8 @@
 .fa-chevron-left::before { content: "\f053"; }
 .fa-eye::before { content: "\f06e"; }
 .fa-eye-slash::before { content: "\f070"; }
+.fa-grip-vertical::before { content: "\f58d"; }
+.fa-share-alt::before { content: "\f1e0"; }
 
 /* ========== CSS Variables ========== */
 :root {
@@ -152,6 +154,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    cursor: pointer;
 }
 
 .logo-icon {
@@ -304,6 +307,10 @@ body {
     border-color: rgba(71, 85, 105, 0.5);
 }
 
+.emoji-slider-container.active-drag {
+    cursor: grabbing;
+}
+
 .advanced-options h3 {
     margin-bottom: 1rem;
     font-weight: 600;
@@ -338,6 +345,13 @@ body {
     background: rgba(15, 23, 42, 0.8);
     border-color: rgba(71, 85, 105, 0.5);
     color: var(--text-dark);
+}
+
+.input-actions .icon-btn,
+.output-actions .icon-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
 }
 
 /* ========== Main Container ========== */
@@ -501,9 +515,12 @@ label {
     position: relative;
     background: rgba(248, 250, 252, 0.8);
     border-radius: var(--radius-lg);
-    padding: 1.5rem;
     border: 1px solid rgba(226, 232, 240, 0.5);
     margin: 1rem 0;
+    height: 250px;
+    overflow: auto;
+    cursor: grab;
+    padding: 0;
 }
 
 .dark .emoji-slider-container {
@@ -512,11 +529,10 @@ label {
 }
 
 .emoji-slider {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
     gap: 0.75rem;
-    overflow-x: auto;
-    padding: 1rem 0;
-    scroll-behavior: smooth;
+    padding: 1rem;
 }
 
 .emoji-slider::-webkit-scrollbar {
@@ -534,62 +550,32 @@ label {
 }
 
 .emoji-item {
-    min-width: 60px;
-    height: 60px;
+    min-width: 85px;
+    height: 85px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.75rem;
+    font-size: 2.8rem;
     border-radius: var(--radius-lg);
     cursor: pointer;
-    transition: all var(--transition);
-    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background: transparent;
     border: 2px solid transparent;
 }
 
 .emoji-item:hover {
-    transform: scale(1.15);
-    border-color: var(--primary);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-5px) scale(1.1);
+    color: var(--primary);
 }
 
 .emoji-item.active {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    transform: scale(1.2);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-8px) scale(1.25);
+    color: var(--primary);
+    text-shadow: 0 0 10px var(--primary), 0 0 20px var(--secondary);
 }
 
 .slider-control {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(226, 232, 240, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all var(--transition);
-    z-index: 2;
-    box-shadow: var(--shadow);
-}
-
-.slider-control:hover {
-    background: var(--primary);
-    color: white;
-    transform: translateY(-50%) scale(1.1);
-}
-
-.slider-control.prev {
-    right: 15px;
-}
-
-.slider-control.next {
-    left: 15px;
+    display: none;
 }
 
 /* ========== Results Section ========== */
@@ -868,6 +854,165 @@ body.sidebar-open {
     display: none !important;
 }
 
+/* ========== Emoji Management List ========== */
+.emoji-manage-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(255,255,255,0.8);
+    border-radius: var(--radius-lg);
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(226,232,240,0.5);
+    cursor: grab;
+    transition: all 0.2s ease;
+}
+
+.emoji-manage-item.dragging {
+    opacity: 0.5;
+    background: rgba(102, 126, 234, 0.2);
+    cursor: grabbing;
+}
+
+.emoji-manage-item.over {
+    border-top: 2px solid var(--primary);
+}
+
+.emoji-manage-item:hover {
+    border-color: var(--primary);
+    transform: translateX(-3px);
+    box-shadow: var(--shadow);
+}
+
+.emoji-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.drag-handle {
+    color: var(--text-gray);
+    opacity: 0.5;
+}
+
+.emoji-char {
+    font-size: 1.5rem;
+}
+
+.delete-emoji-btn {
+    color: #ef4444;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.delete-emoji-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* ========== History List ========== */
+.history-item {
+    position: relative;
+    background: rgba(248,250,252,0.8);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+    border: 1px solid rgba(226,232,240,0.5);
+    overflow: hidden;
+}
+
+.dark .history-item {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(71, 85, 105, 0.5);
+}
+
+.history-item-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    transition: transform 0.3s ease;
+}
+
+.history-item:hover .history-item-main {
+    transform: translateX(-120px);
+}
+
+.history-item-info {
+    flex: 1;
+}
+
+.history-item-date {
+    font-size: 0.875rem;
+    color: var(--text-gray);
+}
+
+.history-item-text {
+    font-weight: 500;
+    margin: 0.25rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90%;
+}
+
+.history-item-op {
+    font-size: 0.75rem;
+    color: var(--text-gray);
+}
+
+.history-item-emoji {
+    font-size: 1.5rem;
+    padding-left: 1rem;
+}
+
+.history-item-actions {
+    position: absolute;
+    top: 0;
+    left: -120px;
+    height: 100%;
+    width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(to left, rgba(241,245,249,0), rgba(241,245,249,1) 30%);
+    transition: left 0.3s ease;
+}
+
+.history-item:hover .history-item-actions {
+    left: 0;
+}
+
+.dark .history-item-actions {
+    background: linear-gradient(to left, rgba(51,65,85,0), rgba(51,65,85,1) 30%);
+}
+
+.icon-btn-sm {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-gray);
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.icon-btn-sm:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
 /* ========== Responsive Design ========== */
 @media (max-width: 768px) {
     .container {
@@ -975,12 +1120,41 @@ body.sidebar-open {
     background: linear-gradient(135deg, #64748b, #475569);
 }
 
-/* ========== Input Actions ========== */
-.input-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
+/* ========== Input Wrappers and Actions ========== */
+.input-wrapper, .output-wrapper {
+    position: relative;
+    margin-top: 0.5rem;
+}
+
+#inputText, #output {
+    width: 100%;
+    min-height: 180px;
     margin-bottom: 0.75rem;
+    padding-left: 55px; /* Make space for buttons */
+}
+
+#output {
+    min-height: 120px;
+}
+
+.input-actions {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 2;
+}
+
+.output-actions {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 2;
 }
 
 .icon-btn {
