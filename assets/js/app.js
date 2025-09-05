@@ -3,13 +3,12 @@
 
 // ========== Global Variables ==========
 const $ = (id) => document.getElementById(id);
-const defaultEmojis = [
-    '😎', '✨', '❤️', '🔒', '🔥', '🌟', '🎯', '💡', '🚀', '💎', '📌', '✅', '⚡', '🌈', '🌠',
-    '😊', '😂', '😍', '🤔', '👍', '👎', '🙌', '👀', '👻', '💀', '👽', '🤖', '👾', '🎃', '🧠',
-    '👑', '💼', '🕶️', '🎓', '🔑', '💡', '🎉', '🎁', '🎈', '✉️', '📬', '📮', '📁', '📈', '📉',
-    '📌', '📍', '📎', '✂️', '🗑️', '✏️', '✒️', '🔍', '🔎', '🔓', '🔏', '🔐', '🔑', '🏷️', '💰',
-    '⚙️', '⚗️', '🔭', '🔬', '📡', '🛡️', '⚔️', '💣', '🔫', '💊', '💉', '🌡️', '⚖️', '🔗', '⛓️'
-];
+const defaultEmojis = ['😎', '✨', '❤️', '🔒', '🔥', '🌟', '🎯', '💡', '🚀', '💎', '📌', '✅', '⚡', '🌈', '🌠'];
+
+// QR Code Globals
+let qrcode = null;
+let videoStream = null;
+let animationFrameId = null;
 
 // ========== Helper Functions ==========
 // Helper functions for robust Base64 encoding/decoding to handle binary data correctly
@@ -119,85 +118,74 @@ function decode(text) {
     return new Uint8Array(decoded);
 }
 
-// ========== Enhanced Compression System with UTF-8 Support ==========
-
+// ========== LZW Compression System ==========
 class AdvancedCompression {
-    static compress(text) {
-        if (!text || text.length === 0) return new Uint8Array([]);
+    static compress(data) {
+        if (!data) return new Uint8Array([]);
 
-        try {
-            const textBytes = encoder.encode(text);
-            return this.simpleCompress(textBytes);
-        } catch (error) {
-            console.error('Compression error:', error);
-            return encoder.encode(text);
+        let dict = new Map();
+        for (let i = 0; i < 256; i++) {
+            dict.set(String.fromCharCode(i), i);
         }
+
+        let p = "";
+        let out = [];
+        let code = 256;
+
+        for (let i = 0; i < data.length; i++) {
+            const c = String.fromCharCode(data[i]);
+            const pc = p + c;
+            if (dict.has(pc)) {
+                p = pc;
+            } else {
+                out.push(dict.get(p));
+                dict.set(pc, code);
+                code++;
+                p = c;
+            }
+        }
+        out.push(dict.get(p));
+
+        const result = new Uint16Array(out);
+        return new Uint8Array(result.buffer);
     }
 
     static decompress(data) {
-        if (!data || data.length === 0) return '';
+        if (!data || data.length === 0) return new Uint8Array([]);
 
-        try {
-            const decompressed = this.simpleDecompress(data);
-            return decoder.decode(decompressed);
-        } catch (error) {
-            console.error('Decompression error:', error);
-            try {
-                return decoder.decode(data);
-            } catch (e) {
-                console.error('Fallback decode error:', e);
-                return '';
-            }
+        let dict = new Map();
+        for (let i = 0; i < 256; i++) {
+            dict.set(i, String.fromCharCode(i));
         }
-    }
 
-    static simpleCompress(data) {
-        const result = [];
-        let i = 0;
+        const codes = new Uint16Array(data.buffer);
+        let p = String.fromCharCode(codes[0]);
+        let out = [p];
+        let code = 256;
 
-        while (i < data.length) {
-            const current = data[i];
-            let count = 1;
-
-            while (i + count < data.length && data[i + count] === current && count < 255) {
-                count++;
-            }
-
-            if (count > 3) {
-                result.push(255, count, current);
+        for (let i = 1; i < codes.length; i++) {
+            const k = codes[i];
+            let entry;
+            if (dict.has(k)) {
+                entry = dict.get(k);
+            } else if (k === code) {
+                entry = p + p.charAt(0);
             } else {
-                for (let j = 0; j < count; j++) {
-                    result.push(current);
-                }
+                return null; // Should not happen
             }
 
-            i += count;
+            out.push(entry);
+            dict.set(code, p + entry.charAt(0));
+            code++;
+            p = entry;
         }
 
-        return new Uint8Array(result);
-    }
-
-    static simpleDecompress(data) {
-        const result = [];
-        let i = 0;
-
-        while (i < data.length) {
-            if (data[i] === 255 && i + 2 < data.length) {
-                const count = data[i + 1];
-                const value = data[i + 2];
-
-                for (let j = 0; j < count; j++) {
-                    result.push(value);
-                }
-
-                i += 3;
-            } else {
-                result.push(data[i]);
-                i++;
-            }
+        const decodedString = out.join('');
+        const bytes = new Uint8Array(decodedString.length);
+        for (let i = 0; i < decodedString.length; i++) {
+            bytes[i] = decodedString.charCodeAt(i);
         }
-
-        return new Uint8Array(result);
+        return bytes;
     }
 }
 
@@ -323,6 +311,11 @@ async function encodeText() {
         return;
     }
 
+    const encodeBtn = $('encodeBtn');
+    const originalBtnContent = encodeBtn.innerHTML;
+    encodeBtn.innerHTML = '<div class="spinner"></div>';
+    encodeBtn.disabled = true;
+
     try {
         showToast('جاري التشفير...', 'info', 1000);
 
@@ -332,7 +325,7 @@ async function encodeText() {
         
         let payloadBytes;
         if (useCompression) {
-            payloadBytes = AdvancedCompression.compress(text);
+            payloadBytes = AdvancedCompression.compress(encoder.encode(text));
         } else {
             payloadBytes = encoder.encode(text);
         }
@@ -400,6 +393,9 @@ async function encodeText() {
     } catch (error) {
         console.error('Encoding error:', error);
         showToast('حدث خطأ أثناء التشفير: ' + error.message, 'error');
+    } finally {
+        encodeBtn.innerHTML = originalBtnContent;
+        encodeBtn.disabled = false;
     }
 }
 
@@ -488,7 +484,7 @@ async function decodeSingleMessage(src, { showToasts = true } = {}) {
 
         let finalText;
         if (header.compression) {
-            finalText = AdvancedCompression.decompress(payloadBytes);
+            finalText = decoder.decode(AdvancedCompression.decompress(payloadBytes));
         } else {
             finalText = decoder.decode(payloadBytes);
         }
@@ -526,24 +522,37 @@ async function decodeText() {
         return;
     }
 
+    const decodeBtn = $('decodeBtn');
+    const originalBtnContent = decodeBtn.innerHTML;
+    decodeBtn.innerHTML = '<div class="spinner"></div>';
+    decodeBtn.disabled = true;
+
     showToast('جاري فك التشفير...', 'info', 1000);
 
-    const result = await decodeSingleMessage(src);
+    try {
+        const result = await decodeSingleMessage(src);
 
-    if (result && result.text !== null) {
-        output.value = result.text;
-        output.classList.add('has-content');
+        if (result && result.text !== null) {
+            output.value = result.text;
+            output.classList.add('has-content');
 
-        updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
+            updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
 
-        if (appSettings.autoCopyDecodedText) {
-            await copyToClipboard(result.text);
-            showToast(`تم فك تشفير النص ونسخ النتيجة تلقائياً`, 'success');
-        } else {
-            showToast(`تم فك تشفير النص بنجاح`, 'success');
+            if (appSettings.autoCopyDecodedText) {
+                await copyToClipboard(result.text);
+                showToast(`تم فك تشفير النص ونسخ النتيجة تلقائياً`, 'success');
+            } else {
+                showToast(`تم فك تشفير النص بنجاح`, 'success');
+            }
+
+            showResultsSection();
         }
-
-        showResultsSection();
+    } catch (error) {
+        console.error('Decoding error:', error);
+        showToast('حدث خطأ أثناء فك التشفير: ' + error.message, 'error');
+    } finally {
+        decodeBtn.innerHTML = originalBtnContent;
+        decodeBtn.disabled = false;
     }
 }
 
@@ -831,6 +840,11 @@ function showResultsSection() {
     const resultsSection = $('resultsSection');
     if (resultsSection) {
         resultsSection.style.display = 'block';
+        resultsSection.classList.remove('hidden');
+        const statsSection = $('statsSection');
+        if (statsSection) {
+            statsSection.classList.add('fade-in');
+        }
 
         setTimeout(() => {
             resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -849,14 +863,17 @@ async function copyToClipboard(text = null) {
 
     try {
         await navigator.clipboard.writeText(textToCopy);
-        showToast('تم نسخ النص إلى الحافظة', 'success');
+        if (!text) showToast('تم نسخ النص إلى الحافظة');
 
         const copyBtn = $('copyBtn');
-        if (copyBtn) {
-            const originalIcon = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="fas fa-check"></i>';
+        if (copyBtn && !text) {
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> تم النسخ';
+            copyBtn.style.background = '#10b981';
+
             setTimeout(() => {
-                copyBtn.innerHTML = originalIcon;
+                copyBtn.innerHTML = originalText;
+                copyBtn.style.background = '';
             }, 2000);
         }
     } catch (error) {
@@ -949,26 +966,26 @@ function renderCustomEmojiList() {
         return;
     }
 
-    emojiList.forEach((emoji, index) => {
+    emojiList.forEach(emoji => {
         const emojiRow = document.createElement('div');
-        emojiRow.className = 'emoji-manage-item';
-        emojiRow.setAttribute('draggable', 'true');
-        emojiRow.setAttribute('data-index', index);
+        emojiRow.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: rgba(255,255,255,0.8); border-radius: 0.75rem; margin-bottom: 0.5rem; border: 1px solid rgba(226,232,240,0.5);';
 
         emojiRow.innerHTML = `
-            <div class="emoji-info">
-                <i class="fas fa-grip-vertical drag-handle"></i>
-                <span class="emoji-char">${emoji}</span>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.5rem;">${emoji}</span>
             </div>
-            <button class="delete-emoji-btn" title="حذف الإيموجي">
+            <button style="color: #ef4444; background: none; border: none; padding: 0.5rem; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s;" title="حذف الإيموجي">
                 <i class="fas fa-trash"></i>
             </button>
         `;
 
-        const deleteBtn = emojiRow.querySelector('.delete-emoji-btn');
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            removeEmoji(emoji);
+        const deleteBtn = emojiRow.querySelector('button');
+        deleteBtn.addEventListener('click', () => removeEmoji(emoji));
+        deleteBtn.addEventListener('mouseenter', () => {
+            deleteBtn.style.background = 'rgba(239, 68, 68, 0.1)';
+        });
+        deleteBtn.addEventListener('mouseleave', () => {
+            deleteBtn.style.background = 'none';
         });
 
         customEmojiList.appendChild(emojiRow);
@@ -1006,22 +1023,6 @@ function addToHistory(text, result, operation) {
     renderHistory();
 }
 
-async function shareHistoryItem(content) {
-    const title = 'Emoji Cipher Pro - نص مشفر';
-    try {
-        if (navigator.share) {
-            await navigator.share({ title, text: content });
-            showToast('تم فتح نافذة المشاركة', 'success');
-        } else {
-            await copyToClipboard(content);
-            showToast('تم نسخ المحتوى، المشاركة غير مدعومة', 'info');
-        }
-    } catch (error) {
-        console.error('Share error:', error);
-        showToast('حدث خطأ أثناء المشاركة', 'error');
-    }
-}
-
 function renderHistory() {
     const historyList = $('historyList');
     const emptyHistory = $('emptyHistory');
@@ -1042,27 +1043,21 @@ function renderHistory() {
 
     historyItems.forEach(item => {
         const historyItem = document.createElement('div');
-        historyItem.className = 'history-item';
+        historyItem.style.cssText = 'background: rgba(248,250,252,0.8); padding: 1rem; border-radius: 0.75rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(226,232,240,0.5);';
 
         const date = new Date(item.timestamp).toLocaleString('ar-EG');
         historyItem.innerHTML = `
-            <div class="history-item-main">
-                <div class="history-item-info">
-                    <div class="history-item-date">${date}</div>
-                    <div class="history-item-text">${item.text}${item.text.length >= 100 ? '...' : ''}</div>
-                    <div class="history-item-op">تشفير</div>
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    <div style="font-size: 0.875rem; color: #64748b;">${date}</div>
+                    <div style="font-weight: 500; margin: 0.25rem 0;">${item.text}${item.text.length >= 100 ? '...' : ''}</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">تشفير</div>
                 </div>
-                <div class="history-item-emoji">${item.result.substring(0, 1)}</div>
-            </div>
-            <div class="history-item-actions">
-                <button class="icon-btn-sm copy-history-btn"><i class="far fa-copy"></i></button>
-                <button class="icon-btn-sm share-history-btn"><i class="fas fa-share-alt"></i></button>
-                <button class="icon-btn-sm restore-history-btn"><i class="fas fa-redo"></i></button>
+                <div style="font-size: 1.5rem;">${item.result.substring(0, 1)}</div>
             </div>
         `;
 
-        historyItem.querySelector('.restore-history-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
+        historyItem.addEventListener('click', () => {
             const inputText = $('inputText');
             if (inputText) {
                 inputText.value = item.result;
@@ -1072,14 +1067,14 @@ function renderHistory() {
             }
         });
 
-        historyItem.querySelector('.copy-history-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            copyToClipboard(item.result);
+        historyItem.addEventListener('mouseenter', () => {
+            historyItem.style.background = 'rgba(241,245,249,0.9)';
+            historyItem.style.transform = 'translateX(-3px)';
         });
 
-        historyItem.querySelector('.share-history-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            shareHistoryItem(item.result);
+        historyItem.addEventListener('mouseleave', () => {
+            historyItem.style.background = 'rgba(248,250,252,0.8)';
+            historyItem.style.transform = 'translateX(0)';
         });
 
         historyList.appendChild(historyItem);
@@ -1279,155 +1274,9 @@ function loadHistory() {
     }
 }
 
-// ========== Drag and Drop for Emoji Management ==========
-
-function setupDragAndDrop() {
-    const customEmojiList = $('customEmojiList');
-    if (!customEmojiList) return;
-
-    let dragSrcEl = null;
-
-    function handleDragStart(e) {
-        this.classList.add('dragging');
-        dragSrcEl = this;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', this.getAttribute('data-index'));
-    }
-
-    function handleDragOver(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-        e.dataTransfer.dropEffect = 'move';
-        return false;
-    }
-
-    function handleDragEnter(e) {
-        const target = this.closest('.emoji-manage-item');
-        if (target) {
-            target.classList.add('over');
-        }
-    }
-
-    function handleDragLeave(e) {
-        const target = this.closest('.emoji-manage-item');
-        if (target) {
-            target.classList.remove('over');
-        }
-    }
-
-    function handleDrop(e) {
-        if (e.stopPropagation) {
-            e.stopPropagation();
-        }
-
-        if (dragSrcEl !== this) {
-            const srcIndex = parseInt(dragSrcEl.getAttribute('data-index'));
-            const dropIndex = parseInt(this.getAttribute('data-index'));
-
-            const [removed] = emojiList.splice(srcIndex, 1);
-            emojiList.splice(dropIndex, 0, removed);
-
-            saveEmojis();
-            renderEmojis();
-            showToast('تم تحديث ترتيب الإيموجي', 'success');
-        }
-        return false;
-    }
-
-    function handleDragEnd(e) {
-        document.querySelectorAll('.emoji-manage-item').forEach(item => {
-            item.classList.remove('over');
-            item.classList.remove('dragging');
-        });
-    }
-
-    // Use event delegation
-    customEmojiList.addEventListener('dragstart', function(e) {
-        const target = e.target.closest('.emoji-manage-item');
-        if (target) {
-            handleDragStart.call(target, e);
-        }
-    });
-
-    customEmojiList.addEventListener('dragenter', function(e) {
-        const target = e.target.closest('.emoji-manage-item');
-        if (target && target !== dragSrcEl) {
-            handleDragEnter.call(target, e);
-        }
-    });
-
-    customEmojiList.addEventListener('dragover', handleDragOver);
-
-    customEmojiList.addEventListener('dragleave', function(e) {
-        const target = e.target.closest('.emoji-manage-item');
-        if (target) {
-            handleDragLeave.call(target, e);
-        }
-    });
-
-    customEmojiList.addEventListener('drop', function(e) {
-        e.preventDefault();
-        const target = e.target.closest('.emoji-manage-item');
-        if (target) {
-            handleDrop.call(target, e);
-        }
-    });
-
-    customEmojiList.addEventListener('dragend', function(e) {
-        const target = e.target.closest('.emoji-manage-item');
-        if (target) {
-            handleDragEnd.call(target, e);
-        }
-    });
-}
-
-function setupSliderDrag() {
-    const slider = document.querySelector('.emoji-slider-container');
-    if (!slider) return;
-
-    let isDown = false;
-    let startX;
-    let startY;
-    let scrollLeft;
-    let scrollTop;
-
-    slider.addEventListener('mousedown', (e) => {
-        isDown = true;
-        slider.classList.add('active-drag');
-        startX = e.pageX - slider.offsetLeft;
-        startY = e.pageY - slider.offsetTop;
-        scrollLeft = slider.scrollLeft;
-        scrollTop = slider.scrollTop;
-    });
-
-    slider.addEventListener('mouseleave', () => {
-        isDown = false;
-        slider.classList.remove('active-drag');
-    });
-
-    slider.addEventListener('mouseup', () => {
-        isDown = false;
-        slider.classList.remove('active-drag');
-    });
-
-    slider.addEventListener('mousemove', (e) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - slider.offsetLeft;
-        const y = e.pageY - slider.offsetTop;
-        const walkX = (x - startX) * 2; // scroll-fast
-        const walkY = (y - startY) * 2; // scroll-fast
-        slider.scrollLeft = scrollLeft - walkX;
-        slider.scrollTop = scrollTop - walkY;
-    });
-}
-
 // ========== Event Setup ==========
 
 function setupEventListeners() {
-    setupDragAndDrop();
-    setupSliderDrag();
     // Encode/Decode buttons
     const encodeBtn = $('encodeBtn');
     const decodeBtn = $('decodeBtn');
@@ -1440,9 +1289,36 @@ function setupEventListeners() {
     // Input action buttons
     const deleteBtn = $('deleteBtn');
     const pasteBtn = $('pasteBtn');
+    const qrBtn = $('qrBtn');
 
     if (deleteBtn) deleteBtn.addEventListener('click', clearInput);
     if (pasteBtn) pasteBtn.addEventListener('click', pasteFromClipboard);
+    if (qrBtn) qrBtn.addEventListener('click', handleQrButtonClick);
+
+    // QR Modal listeners
+    const closeQrModal = $('closeQrModal');
+    const closeScannerModal = $('closeScannerModal');
+    const qrModal = $('qrModal');
+    const scannerModal = $('scannerModal');
+
+    if (closeQrModal) closeQrModal.addEventListener('click', () => qrModal.classList.add('hidden'));
+    if (closeScannerModal) closeScannerModal.addEventListener('click', stopScanner);
+
+    // Close modal on overlay click
+    if (qrModal) {
+        qrModal.addEventListener('click', (e) => {
+            if (e.target === qrModal) {
+                qrModal.classList.add('hidden');
+            }
+        });
+    }
+    if (scannerModal) {
+        scannerModal.addEventListener('click', (e) => {
+            if (e.target === scannerModal) {
+                stopScanner();
+            }
+        });
+    }
 
     // Text input monitoring
     const inputText = $('inputText');
@@ -1471,12 +1347,6 @@ function setupEventListeners() {
     }
 
     // Navigation buttons
-    const logo = document.querySelector('.logo');
-    if (logo) {
-        logo.addEventListener('click', () => {
-            switchTab('cipher');
-        });
-    }
     const menuToggle = $('menuToggle');
     const closeSidebarBtn = $('closeSidebar');
     const resetBtn = $('resetBtn');
@@ -1714,40 +1584,6 @@ function setupEventListeners() {
 
 // ========== Additional Functions ==========
 
-function animateEmojiGrid() {
-    const sliderContainer = document.querySelector('.emoji-slider-container');
-    if (sliderContainer) {
-        // Start the animation shortly after the app loads to ensure layout is complete
-        setTimeout(() => {
-            const scrollHeight = sliderContainer.scrollHeight;
-            const clientHeight = sliderContainer.clientHeight;
-            const maxScrollTop = scrollHeight - clientHeight;
-
-            // Only animate if there's something to scroll
-            if (maxScrollTop > 0) {
-                // Define the animation sequence
-                const animationSequence = [
-                    { scrollTop: maxScrollTop, delay: 1200, behavior: 'smooth' }, // Scroll to bottom
-                    { scrollTop: 0, delay: 2500, behavior: 'smooth' }             // Scroll back to top
-                ];
-
-                let promise = Promise.resolve();
-                animationSequence.forEach(step => {
-                    promise = promise.then(() => {
-                        return new Promise(resolve => {
-                            setTimeout(() => {
-                                sliderContainer.scrollTo({ top: step.scrollTop, behavior: step.behavior });
-                                // Resolve after the scroll animation is expected to finish
-                                setTimeout(resolve, 1500);
-                            }, step.delay);
-                        });
-                    });
-                });
-            }
-        }, 800);
-    }
-}
-
 function checkPasswordStrength() {
     const passwordInput = $('password');
     const strengthIndicator = $('passwordStrength');
@@ -1827,6 +1663,123 @@ async function pasteFromClipboard() {
     }
 }
 
+function handleQrButtonClick() {
+    const output = $('output');
+    if (output && output.value.trim() !== '') {
+        generateQRCode();
+    } else {
+        openScanner();
+    }
+}
+
+function generateQRCode() {
+    const output = $('output');
+    const qrContainer = $('qrcode-container');
+    const qrModal = $('qrModal');
+    if (!output || !qrContainer || !qrModal) return;
+
+    const text = output.value;
+    if (text.length === 0) {
+        showToast('لا يوجد محتوى لإنشاء رمز QR', 'warning');
+        return;
+    }
+
+    qrContainer.innerHTML = ''; // Clear previous QR code
+
+    try {
+        qrcode = new QRCode(qrContainer, {
+            text: text,
+            width: 256,
+            height: 256,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+        qrModal.classList.remove('hidden');
+    } catch (err) {
+        console.error("QR Code generation failed: ", err);
+        showToast('فشل في إنشاء رمز QR', 'error');
+    }
+}
+
+function openScanner() {
+    const scannerModal = $('scannerModal');
+    const video = $('scannerVideo');
+    const scannerMessage = $('scannerMessage');
+
+    if (!scannerModal || !video || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('متصفحك لا يدعم الوصول للكاميرا.', 'error');
+        return;
+    }
+
+    scannerModal.classList.remove('hidden');
+    scannerMessage.textContent = 'جاري طلب الوصول إلى الكاميرا...';
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(function(stream) {
+            videoStream = stream;
+            video.srcObject = stream;
+            video.play();
+            scannerMessage.textContent = 'وجّه الكاميرا نحو رمز QR';
+            animationFrameId = requestAnimationFrame(tick);
+        })
+        .catch(function(err) {
+            console.error("Error accessing camera: ", err);
+            scannerMessage.textContent = 'فشل الوصول إلى الكاميرا. يرجى منح الإذن.';
+            showToast('فشل الوصول إلى الكاميرا', 'error');
+        });
+}
+
+function stopScanner() {
+    if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+    }
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+    const scannerModal = $('scannerModal');
+    if (scannerModal) {
+        scannerModal.classList.add('hidden');
+    }
+}
+
+function tick() {
+    const video = $('scannerVideo');
+    const canvasElement = $('scannerCanvas');
+    const canvas = canvasElement.getContext('2d');
+    const inputText = $('inputText');
+    const scannerMessage = $('scannerMessage');
+
+    if (!video || !canvasElement || !inputText || !scannerMessage) return;
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvasElement.height = video.videoHeight;
+        canvasElement.width = video.videoWidth;
+        canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+
+        try {
+            const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                inversionAttempts: "dontInvert",
+            });
+
+            if (code && code.data) {
+                scannerMessage.textContent = `تم العثور على رمز!`;
+                showToast('تم العثور على رمز QR بنجاح!', 'success');
+                inputText.value = code.data;
+                updateCharCount();
+                stopScanner();
+                return;
+            }
+        } catch (e) {
+            console.error("jsQR error: ", e);
+        }
+    }
+    animationFrameId = requestAnimationFrame(tick);
+}
+
 function applySettings() {
     applyTheme();
     changeFontSize(appSettings.fontSize);
@@ -1876,9 +1829,7 @@ async function initApp() {
         });
 
         console.log('Enhanced Emoji Cipher Pro with Multi-Emoji Support initialized successfully!');
-        showToast('تم تحميل التطبيق المحسن مع دعم عدّة إيموجي بنجاح', 'success');
-
-        animateEmojiGrid();
+        showToast('تم تحميل التطبيق المحسن مع دعم عدة إيموجي بنجاح', 'success');
 
     } catch (error) {
         console.error('Error initializing app:', error);
