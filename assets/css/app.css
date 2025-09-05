@@ -70,9 +70,9 @@
 .fa-chevron-left::before { content: "\f053"; }
 .fa-eye::before { content: "\f06e"; }
 .fa-eye-slash::before { content: "\f070"; }
-.fa-grip-vertical::before { content: "\f58d"; }
-.fa-share-alt::before { content: "\f1e0"; }
 .fa-paste::before { content: "\f0ea"; }
+.fa-share-alt::before { content: "\f1e0"; }
+.fa-grip-vertical::before { content: "\f58d"; }
 
 /* ========== CSS Variables ========== */
 :root {
@@ -308,8 +308,8 @@ body {
     border-color: rgba(71, 85, 105, 0.5);
 }
 
-.emoji-slider-container.active-drag {
-    cursor: grabbing;
+#resultsSection {
+    display: none;
 }
 
 .advanced-options h3 {
@@ -346,24 +346,6 @@ body {
     background: rgba(15, 23, 42, 0.8);
     border-color: rgba(71, 85, 105, 0.5);
     color: var(--text-dark);
-}
-
-.input-actions .icon-btn,
-.output-actions .icon-btn {
-    background: transparent;
-    border: none;
-    width: auto;
-    height: auto;
-    font-size: 0.9rem;
-    padding: 0.5rem;
-    color: var(--text-gray);
-    box-shadow: none;
-}
-
-.input-actions .icon-btn:hover,
-.output-actions .icon-btn:hover {
-    color: var(--primary);
-    background: rgba(102, 126, 234, 0.1);
 }
 
 /* ========== Main Container ========== */
@@ -540,6 +522,10 @@ label {
     border-color: rgba(71, 85, 105, 0.5);
 }
 
+.emoji-slider-container.active-drag {
+    cursor: grabbing;
+}
+
 .emoji-slider {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -592,10 +578,6 @@ label {
 }
 
 /* ========== Results Section ========== */
-.results-section:not(.visible) {
-    display: none;
-}
-
 .results-section {
     background: rgba(248, 250, 252, 0.8);
     border: 1px solid rgba(226, 232, 240, 0.5);
@@ -724,7 +706,7 @@ input:checked + .slider:before {
 /* ========== Toast Notifications ========== */
 .toast-container {
     position: fixed;
-    top: 110px;
+    top: 80px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10000;
@@ -1017,6 +999,75 @@ body.sidebar-open {
     background: var(--primary);
     color: white;
     transform: scale(1.1);
+}
+
+/* ========== Input Wrappers and Actions ========== */
+.input-wrapper, .output-wrapper {
+    position: relative;
+    margin-top: 0.5rem;
+}
+
+#inputText, #output {
+    width: 100%;
+    min-height: 180px;
+    margin-bottom: 0.75rem;
+    padding-left: 65px; /* Make space for buttons */
+}
+
+#output {
+    min-height: 120px;
+}
+
+.input-actions, .output-actions {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 2;
+}
+
+.input-actions .icon-btn,
+.output-actions .icon-btn {
+    background: transparent;
+    border: none;
+    width: auto;
+    height: auto;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    color: var(--text-gray);
+    box-shadow: none;
+}
+
+.input-actions .icon-btn:hover,
+.output-actions .icon-btn:hover {
+    color: var(--primary);
+    background: rgba(102, 126, 234, 0.1);
+}
+
+/* ========== Modals ========== */
+.modal-content {
+    background: var(--bg-light);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    animation: fadeInUp 0.3s ease;
+}
+
+.dark .modal-content {
+    background: var(--bg-dark);
+    border: 1px solid rgba(71, 85, 105, 0.5);
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
 }
 
 /* ========== Responsive Design ========== */

@@ -831,7 +831,6 @@ function showResultsSection() {
     const resultsSection = $('resultsSection');
     if (resultsSection) {
         resultsSection.style.display = 'block';
-        resultsSection.classList.remove('hidden');
 
         setTimeout(() => {
             resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1718,14 +1717,34 @@ function setupEventListeners() {
 function animateEmojiGrid() {
     const sliderContainer = document.querySelector('.emoji-slider-container');
     if (sliderContainer) {
+        // Start the animation shortly after the app loads to ensure layout is complete
         setTimeout(() => {
-            // Instantly scroll down a bit
-            sliderContainer.scrollTop = 50;
-            // Then smoothly scroll back to the top
-            setTimeout(() => {
-                sliderContainer.scrollTo({ top: 0, behavior: 'smooth' });
-            }, 300);
-        }, 800); // Wait a bit after app load
+            const scrollHeight = sliderContainer.scrollHeight;
+            const clientHeight = sliderContainer.clientHeight;
+            const maxScrollTop = scrollHeight - clientHeight;
+
+            // Only animate if there's something to scroll
+            if (maxScrollTop > 0) {
+                // Define the animation sequence
+                const animationSequence = [
+                    { scrollTop: maxScrollTop, delay: 1200, behavior: 'smooth' }, // Scroll to bottom
+                    { scrollTop: 0, delay: 2500, behavior: 'smooth' }             // Scroll back to top
+                ];
+
+                let promise = Promise.resolve();
+                animationSequence.forEach(step => {
+                    promise = promise.then(() => {
+                        return new Promise(resolve => {
+                            setTimeout(() => {
+                                sliderContainer.scrollTo({ top: step.scrollTop, behavior: step.behavior });
+                                // Resolve after the scroll animation is expected to finish
+                                setTimeout(resolve, 1500);
+                            }, step.delay);
+                        });
+                    });
+                });
+            }
+        }, 800);
     }
 }
 
