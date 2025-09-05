@@ -12,3 +12,57 @@
     display: block; /* Show slider controls on touch devices */
   }
 }
+
+/* --- Custom Animations Added by Jules --- */
+
+/* 1. Animation for the results section to slide in and fade in */
+@keyframes resultFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* We apply this animation to the results section when it becomes visible.
+   The JS likely removes the 'display: none' style, so this selector will catch it. */
+.results-section:not([style*="display: none"]) {
+  animation: resultFadeIn 0.5s ease forwards;
+}
+
+/* 2. A subtle pulse animation for the active sidebar tab to make it stand out */
+@keyframes pulse {
+  0% {
+    transform: scale(1) translateX(-5px);
+    box-shadow: var(--shadow);
+  }
+  50% {
+    transform: scale(1.03) translateX(-5px);
+    box-shadow: var(--shadow-lg);
+  }
+  100% {
+    transform: scale(1) translateX(-5px);
+    box-shadow: var(--shadow);
+  }
+}
+
+/* Apply the pulse animation to the active tab, overriding the static transform */
+.sidebar-tab.active {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+/* 3. A shake animation for error states (to be used with JS) */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+/* This class can be added via JavaScript to an input to indicate an error */
+.input-error {
+  animation: shake 0.4s ease-in-out;
+  border-color: var(--error) !important;
+}
