@@ -3,7 +3,7 @@
 
 // ========== Global Variables ==========
 const $ = (id) => document.getElementById(id);
-const defaultEmojis = ['😎', '✨', '❤️', '🔒', '🔥', '🌟', '🎯', '💡', '🚀', '💎', '📌', '✅', '⚡', '🌈', '🌠', '🔑', '🎉', '🎁', '🎈', '📁', '✉️', '🌍', '💻', '📱', '🛡️'];
+const defaultEmojis = ['😎', '✨', '❤️', '🔒', '🔥', '🌟', '🎯', '💡', '🚀', '💎', '📌', '✅', '⚡', '🌈', '🌠'];
 
 // QR Code Globals
 let qrcode = null;
@@ -510,7 +510,7 @@ async function decodeSingleMessage(src, { showToasts = true } = {}) {
     }
 }
 
-async function handleUniversalDecode() {
+async function decodeText() {
     const inputText = $('inputText');
     const output = $('output');
 
@@ -525,24 +525,54 @@ async function handleUniversalDecode() {
         return;
     }
 
-    showToast('جاري فك التشفير...', 'info');
+    showToast('جاري فك التشفير...', 'info', 1000);
 
-    const emojiRegex = new RegExp(`(${emojiList.map(e => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
-    const matches = [...src.matchAll(emojiRegex)];
+    const result = await decodeSingleMessage(src);
 
-    if (matches.length === 0) {
-        // If no known emoji is found, try to decode the whole thing as a single message
-        const result = await decodeSingleMessage(src);
-        if (result && result.text !== null) {
-            output.value = result.text;
-            output.classList.add('has-content');
-            updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
+    if (result && result.text !== null) {
+        output.value = result.text;
+        output.classList.add('has-content');
+
+        updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
+
+        if (appSettings.autoCopyDecodedText) {
+            await copyToClipboard(result.text);
+            showToast(`تم فك تشفير النص ونسخ النتيجة تلقائياً`, 'success');
+        } else {
             showToast(`تم فك تشفير النص بنجاح`, 'success');
-            showResultsSection();
         }
+
+        showResultsSection();
+    }
+}
+
+async function decodeMultipleText() {
+    const inputText = $('inputText');
+    const output = $('output');
+
+    if (!inputText || !output) {
+        showToast('عناصر الواجهة غير متوفرة', 'error');
         return;
     }
 
+    const src = inputText.value.trim();
+    if (!src) {
+        showToast('يرجى إدخال نص مشفر', 'error');
+        return;
+    }
+
+    showToast('جاري البحث عن رسائل متعددة...', 'info');
+
+    const emojiRegex = new RegExp(`(${emojiList.map(e => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
+
+    const matches = [...src.matchAll(emojiRegex)];
+
+    if (matches.length === 0) {
+        showToast('لم يتم العثور على أي إيموجي معروف للبدء به.', 'error');
+        return;
+    }
+
+    let decodedCount = 0;
     let decodedOutputs = [];
     let totalOriginalSize = 0;
     let totalCompressedSize = 0;
@@ -553,6 +583,7 @@ async function handleUniversalDecode() {
             const result = await decodeSingleMessage(potentialMessage, { showToasts: false });
             if (result && result.text) {
                 decodedOutputs.push(result.text);
+                decodedCount++;
                 totalOriginalSize += result.stats.originalSize || 0;
                 totalCompressedSize += result.stats.compressedSize || 0;
             }
@@ -565,11 +596,11 @@ async function handleUniversalDecode() {
         }
     }
 
-    if (decodedOutputs.length > 0) {
-        output.value = decodedOutputs.join('\n\n');
+    if (decodedCount > 0) {
+        output.value = `--- تم العثور على ${decodedCount} رسالة ---\n\n` + decodedOutputs.join('\n\n----------\n\n');
         output.classList.add('has-content');
         updateStats(totalOriginalSize, totalCompressedSize, output.value.length);
-        showToast(`تم فك تشفير ${decodedOutputs.length} رسالة بنجاح.`, 'success');
+        showToast(`تم فك تشفير ${decodedCount} رسالة بنجاح.`, 'success');
         showResultsSection();
     } else {
         showToast('تم البحث ولكن لم يتم العثور على رسائل مشفرة صالحة.', 'warning');
