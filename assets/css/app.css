@@ -307,6 +307,10 @@ body {
     border-color: rgba(71, 85, 105, 0.5);
 }
 
+.emoji-slider-container.active-drag {
+    cursor: grabbing;
+}
+
 .advanced-options h3 {
     margin-bottom: 1rem;
     font-weight: 600;
@@ -341,6 +345,13 @@ body {
     background: rgba(15, 23, 42, 0.8);
     border-color: rgba(71, 85, 105, 0.5);
     color: var(--text-dark);
+}
+
+.input-actions .icon-btn,
+.output-actions .icon-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
 }
 
 /* ========== Main Container ========== */
@@ -504,9 +515,12 @@ label {
     position: relative;
     background: rgba(248, 250, 252, 0.8);
     border-radius: var(--radius-lg);
-    padding: 1.5rem;
     border: 1px solid rgba(226, 232, 240, 0.5);
     margin: 1rem 0;
+    height: 250px;
+    overflow: auto;
+    cursor: grab;
+    padding: 0;
 }
 
 .dark .emoji-slider-container {
@@ -515,11 +529,10 @@ label {
 }
 
 .emoji-slider {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
     gap: 0.75rem;
-    overflow-x: auto;
-    padding: 1rem 0;
-    scroll-behavior: smooth;
+    padding: 1rem;
 }
 
 .emoji-slider::-webkit-scrollbar {
@@ -537,12 +550,12 @@ label {
 }
 
 .emoji-item {
-    min-width: 80px;
-    height: 80px;
+    min-width: 85px;
+    height: 85px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
+    font-size: 2.8rem;
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);

@@ -3,7 +3,13 @@
 
 // ========== Global Variables ==========
 const $ = (id) => document.getElementById(id);
-const defaultEmojis = ['😎', '✨', '❤️', '🔒', '🔥', '🌟', '🎯', '💡', '🚀', '💎', '📌', '✅', '⚡', '🌈', '🌠'];
+const defaultEmojis = [
+    '😎', '✨', '❤️', '🔒', '🔥', '🌟', '🎯', '💡', '🚀', '💎', '📌', '✅', '⚡', '🌈', '🌠',
+    '😊', '😂', '😍', '🤔', '👍', '👎', '🙌', '👀', '👻', '💀', '👽', '🤖', '👾', '🎃', '🧠',
+    '👑', '💼', '🕶️', '🎓', '🔑', '💡', '🎉', '🎁', '🎈', '✉️', '📬', '📮', '📁', '📈', '📉',
+    '📌', '📍', '📎', '✂️', '🗑️', '✏️', '✒️', '🔍', '🔎', '🔓', '🔏', '🔐', '🔑', '🏷️', '💰',
+    '⚙️', '⚗️', '🔭', '🔬', '📡', '🛡️', '⚔️', '💣', '🔫', '💊', '💉', '🌡️', '⚖️', '🔗', '⛓️'
+];
 
 // ========== Helper Functions ==========
 // Helper functions for robust Base64 encoding/decoding to handle binary data correctly
@@ -1377,10 +1383,52 @@ function setupDragAndDrop() {
     });
 }
 
+function setupSliderDrag() {
+    const slider = document.querySelector('.emoji-slider-container');
+    if (!slider) return;
+
+    let isDown = false;
+    let startX;
+    let startY;
+    let scrollLeft;
+    let scrollTop;
+
+    slider.addEventListener('mousedown', (e) => {
+        isDown = true;
+        slider.classList.add('active-drag');
+        startX = e.pageX - slider.offsetLeft;
+        startY = e.pageY - slider.offsetTop;
+        scrollLeft = slider.scrollLeft;
+        scrollTop = slider.scrollTop;
+    });
+
+    slider.addEventListener('mouseleave', () => {
+        isDown = false;
+        slider.classList.remove('active-drag');
+    });
+
+    slider.addEventListener('mouseup', () => {
+        isDown = false;
+        slider.classList.remove('active-drag');
+    });
+
+    slider.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - slider.offsetLeft;
+        const y = e.pageY - slider.offsetTop;
+        const walkX = (x - startX) * 2; // scroll-fast
+        const walkY = (y - startY) * 2; // scroll-fast
+        slider.scrollLeft = scrollLeft - walkX;
+        slider.scrollTop = scrollTop - walkY;
+    });
+}
+
 // ========== Event Setup ==========
 
 function setupEventListeners() {
     setupDragAndDrop();
+    setupSliderDrag();
     // Encode/Decode buttons
     const encodeBtn = $('encodeBtn');
     const decodeBtn = $('decodeBtn');
