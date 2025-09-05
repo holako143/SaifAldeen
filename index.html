@@ -17,13 +17,13 @@
     <meta name="apple-mobile-web-app-title" content="Emoji Cipher Pro">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="assets/icons/icon-128x128.png">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
     
     <!-- Manifest -->
     <link rel="manifest" href="manifest.json">
     
     <!-- Styles -->
-    <link rel="stylesheet" href="assets/css/app.css">
+    <link rel="stylesheet" href="./assets/css/app.css">
 </head>
 <body class="theme-default">
     <!-- Navigation Bar -->
@@ -82,84 +82,69 @@
         
         <div class="sidebar-content">
             <div class="advanced-options">
-                <h3 id="advancedOptionsToggle">خيارات متقدمة</h3>
-                <div class="advanced-options-content">
-                    <div class="option-item">
-                        <label for="useCompression">
-                            <input id="useCompression" type="checkbox" checked/>
-                            <i class="fas fa-compress-alt"></i>
-                            ضغط النص
-                        </label>
-                    </div>
+                <h3>خيارات متقدمة</h3>
+                
+                <div class="option-item">
+                    <label for="useCompression">
+                        <input id="useCompression" type="checkbox" checked/>
+                        <i class="fas fa-compress-alt"></i>
+                        ضغط النص
+                    </label>
+                </div>
 
-                    <div class="option-item">
-                        <label for="autoCopyEncodedEmoji">
-                            <input id="autoCopyEncodedEmoji" type="checkbox" checked/>
-                            <i class="fas fa-copy"></i>
-                            نسخ تلقائي للإيموجي المشفر
-                        </label>
-                    </div>
+                <div class="option-item">
+                    <label for="autoCopyEncodedEmoji">
+                        <input id="autoCopyEncodedEmoji" type="checkbox" checked/>
+                        <i class="fas fa-copy"></i>
+                        نسخ تلقائي للإيموجي المشفر
+                    </label>
+                </div>
 
-                    <div class="option-item">
-                        <label for="autoCopyDecodedText">
-                            <input id="autoCopyDecodedText" type="checkbox" checked/>
-                            <i class="fas fa-clipboard-check"></i>
-                            نسخ تلقائي للنص المفكوك
-                        </label>
-                    </div>
+                <div class="option-item">
+                    <label for="autoCopyDecodedText">
+                        <input id="autoCopyDecodedText" type="checkbox" checked/>
+                        <i class="fas fa-clipboard-check"></i>
+                        نسخ تلقائي للنص المفكوك
+                    </label>
+                </div>
 
-                    <div class="option-item">
-                        <label for="showNotifications">
-                            <input id="showNotifications" type="checkbox" checked/>
-                            <i class="fas fa-bell"></i>
-                            عرض الإشعارات
-                        </label>
+                <div class="option-item">
+                    <label for="showNotifications">
+                        <input id="showNotifications" type="checkbox" checked/>
+                        <i class="fas fa-bell"></i>
+                        عرض الإشعارات
+                    </label>
+                </div>
+                
+                <div class="option-item">
+                    <label for="useEncrypt">
+                        <input id="useEncrypt" type="checkbox"/>
+                        <i class="fas fa-lock"></i>
+                        تشفير بكلمة سر
+                    </label>
+                </div>
+                
+                <div id="passwordSection" class="hidden" style="margin-top: 1rem;">
+                    <label for="password">كلمة السر</label>
+                    <div style="position: relative;">
+                        <input id="password" type="password" placeholder="أدخل كلمة السر القوية"/>
+                        <button id="togglePassword" type="button" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer;">
+                            <i class="far fa-eye"></i>
+                        </button>
                     </div>
                     
-                    <div class="option-item">
-                        <label for="useEncrypt">
-                            <input id="useEncrypt" type="checkbox"/>
-                            <i class="fas fa-lock"></i>
-                            تشفير بكلمة سر
-                        </label>
+                    <div style="margin-top: 0.75rem;">
+                        <label for="encryptionStrength">قوة التشفير</label>
+                        <select id="encryptionStrength" style="width: 100%; padding: 0.5rem; margin-top: 0.25rem;">
+                            <option value="low">منخفضة (سريع)</option>
+                            <option value="medium">متوسطة (متوازن)</option>
+                            <option value="high" selected>عالية (آمن)</option>
+                        </select>
                     </div>
                     
-                    <div id="passwordSection" class="hidden" style="margin-top: 1rem;">
-                        <label for="password">كلمة السر</label>
-                        <div style="position: relative;">
-                            <input id="password" type="password" placeholder="أدخل كلمة السر القوية"/>
-                            <button id="togglePassword" type="button" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer;">
-                                <i class="far fa-eye"></i>
-                            </button>
-                        </div>
-
-                        <div style="margin-top: 0.75rem;">
-                            <label for="encryptionStrength">قوة التشفير</label>
-                            <select id="encryptionStrength" style="width: 100%; padding: 0.5rem; margin-top: 0.25rem;">
-                                <option value="low">منخفضة (سريع)</option>
-                                <option value="medium">متوسطة (متوازن)</option>
-                                <option value="high" selected>عالية (آمن)</option>
-                            </select>
-                        </div>
-
-                        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
-                            <div id="passwordStrength" style="margin-bottom: 0.25rem;">قوة كلمة السر: <span style="color: #ef4444;">ضعيفة</span></div>
-                            <div>نصيحة: استخدم 12 حرف على الأقل مع أرقام ورموز</div>
-                        </div>
-                    <div class="option-item" style="margin-top: 0.75rem; background: transparent; border: none; padding: 0;">
-                        <label for="useCustomIterations">
-                            <input id="useCustomIterations" type="checkbox"/>
-                            <i class="fas fa-cogs"></i>
-                            تحديد دورات مخصصة
-                        </label>
-                    </div>
-                    <div id="customIterationsSection" class="hidden" style="margin-top: 0.5rem;">
-                        <label for="customIterations">عدد الدورات (الأمان)</label>
-                        <input id="customIterations" type="number" min="10000" step="1000" placeholder="e.g., 250000"/>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">
-                            القيمة الموصى بها: 100,000 أو أعلى.
-                        </div>
-                    </div>
+                    <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #64748b;">
+                        <div id="passwordStrength" style="margin-bottom: 0.25rem;">قوة كلمة السر: <span style="color: #ef4444;">ضعيفة</span></div>
+                        <div>نصيحة: استخدم 12 حرف على الأقل مع أرقام ورموز</div>
                     </div>
                 </div>
             </div>
@@ -177,18 +162,20 @@
             
             <!-- Input Section -->
             <div style="margin-bottom: 1.5rem;">
-                <label for="inputText">النص المراد تشفيره أو فك تشفيره</label>
-                <div class="textarea-container">
-                    <textarea id="inputText" placeholder="أدخل النص هنا..." style="width: 100%; min-height: 180px; margin-bottom: 0.75rem; margin-top: 0.5rem;"></textarea>
-                    <div class="input-actions">
-                        <button id="pasteBtn" class="icon-btn" title="لصق">
-                            <i class="fas fa-paste"></i>
-                        </button>
-                        <button id="deleteBtn" class="icon-btn" title="حذف الكل">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+                <div class="input-actions">
+                    <button id="pasteBtn" class="icon-btn" title="لصق">
+                        <i class="fas fa-paste"></i>
+                    </button>
+                    <button id="qrBtn" class="icon-btn" title="رمز QR">
+                        <i class="fas fa-qrcode"></i>
+                    </button>
+                    <button id="deleteBtn" class="icon-btn" title="حذف الكل">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
+                <label for="inputText">النص المراد تشفيره أو فك تشفيره</label>
+                <textarea id="inputText" placeholder="أدخل النص هنا..." style="width: 100%; min-height: 180px; margin-bottom: 0.75rem; margin-top: 0.5rem;"></textarea>
+                
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <div style="font-size: 0.875rem; color: #64748b;">
                         <span id="charCount">0</span> حرف
@@ -233,6 +220,10 @@
                     <i class="fas fa-unlock"></i>
                     فك التشفير
                 </button>
+                <button id="decodeMultipleBtn" class="btn-secondary" style="flex: 1;">
+                    <i class="fas fa-search-plus"></i>
+                    فك تشفير متعدد
+                </button>
             </div>
             
             <!-- Results Section -->
@@ -242,17 +233,7 @@
                     <h3>النتيجة</h3>
                 </div>
                 
-                <div class="textarea-container">
-                    <textarea id="output" placeholder="النتيجة ستظهر هنا..." readonly style="width: 100%; min-height: 120px; margin-bottom: 1rem;"></textarea>
-                    <div class="output-actions">
-                        <button id="copyBtn" class="icon-btn" title="نسخ النتيجة">
-                            <i class="far fa-copy"></i>
-                        </button>
-                        <button id="shareBtn" class="icon-btn" title="مشاركة">
-                            <i class="fas fa-share"></i>
-                        </button>
-                    </div>
-                </div>
+                <textarea id="output" placeholder="النتيجة ستظهر هنا..." readonly style="width: 100%; min-height: 120px; margin-bottom: 1rem;"></textarea>
 
                 <!-- Statistics -->
                 <div id="statsSection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
@@ -264,6 +245,18 @@
                         <div style="font-size: 0.75rem; color: #059669;">بعد المعالجة</div>
                         <div id="compressedSize" style="font-weight: bold;">0 بايت</div>
                     </div>
+                </div>
+                
+                <!-- Copy and Share Buttons -->
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <button id="copyBtn" class="btn-secondary" style="flex: 1;">
+                        <i class="far fa-copy"></i>
+                        نسخ النتيجة
+                    </button>
+                    <button id="shareBtn" class="btn-primary" style="flex: 1;">
+                        <i class="fas fa-share-alt"></i>
+                        مشاركة
+                    </button>
                 </div>
             </div>
         </div>
@@ -460,21 +453,40 @@
         </div>
     </div>
 
+    <!-- QR Code Modals -->
+    <div id="qrModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="modal-title">رمز QR Code</h3>
+            <div id="qrcode-container"></div>
+            <button id="closeQrModal" class="btn-secondary">إغلاق</button>
+        </div>
+    </div>
+
+    <div id="scannerModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="modal-title">مسح رمز QR Code</h3>
+            <div class="scanner-container">
+                <video id="scannerVideo" playsinline></video>
+                <canvas id="scannerCanvas" class="hidden"></canvas>
+            </div>
+            <p id="scannerMessage">وجّه الكاميرا نحو رمز QR</p>
+            <button id="closeScannerModal" class="btn-secondary">إلغاء</button>
+        </div>
+    </div>
+
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- Scripts -->
-    <!-- QR Code Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-    <!-- Main Application Logic -->
-    <script src="assets/js/app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha512-CNg3 डोमेन owner="[REDACTED]" davidshimjs/qrcodejs" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" integrity="sha256-gPAvoV0v4T4YyH3ySqM2I/2vDkd02qP6+D3q6yZ02rA=" crossorigin="anonymous"></script>
+    <script src="./assets/js/app.js"></script>
     
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('sw.js')
+                navigator.serviceWorker.register('./sw.js')
                     .then(function(registration) {
                         console.log('ServiceWorker registration successful');
                     })
