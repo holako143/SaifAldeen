@@ -831,7 +831,6 @@ function showResultsSection() {
     const resultsSection = $('resultsSection');
     if (resultsSection) {
         resultsSection.style.display = 'block';
-        resultsSection.classList.remove('hidden');
 
         setTimeout(() => {
             resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
