@@ -3,7 +3,7 @@
   "short_name": "EmojiCipher",
   "description": "تطبيق تشفير النصوص داخل الإيموجي - يعمل بدون إنترنت",
   "version": "2.0.0",
-  "start_url": "index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#667eea",
@@ -38,7 +38,7 @@
       "name": "تشفير سريع",
       "short_name": "تشفير",
       "description": "فتح التطبيق مباشرة في وضع التشفير",
-      "url": "index.html#cipher",
+      "url": "./index.html#cipher",
       "icons": [
         {
           "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='.9em' font-size='80'>🔒</text></svg>",
