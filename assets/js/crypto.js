@@ -70,74 +70,65 @@ export function decode(text) {
     return new Uint8Array(decoded);
 }
 
-// ========== LZW Compression System ==========
+// ========== Simple RLE-like Compression System ==========
 export class AdvancedCompression {
     static compress(data) {
-        if (!data) return new Uint8Array([]);
-
-        let dict = new Map();
-        for (let i = 0; i < 256; i++) {
-            dict.set(String.fromCharCode(i), i);
-        }
-
-        let p = "";
-        let out = [];
-        let code = 256;
-
-        for (let i = 0; i < data.length; i++) {
-            const c = String.fromCharCode(data[i]);
-            const pc = p + c;
-            if (dict.has(pc)) {
-                p = pc;
-            } else {
-                out.push(dict.get(p));
-                dict.set(pc, code);
-                code++;
-                p = c;
-            }
-        }
-        out.push(dict.get(p));
-
-        const result = new Uint16Array(out);
-        return new Uint8Array(result.buffer);
+        if (!data || data.length === 0) return new Uint8Array([]);
+        return this.simpleCompress(data);
     }
 
     static decompress(data) {
         if (!data || data.length === 0) return new Uint8Array([]);
+        return this.simpleDecompress(data);
+    }
 
-        let dict = new Map();
-        for (let i = 0; i < 256; i++) {
-            dict.set(i, String.fromCharCode(i));
-        }
+    static simpleCompress(data) {
+        const result = [];
+        let i = 0;
 
-        const codes = new Uint16Array(data.buffer);
-        let p = String.fromCharCode(codes[0]);
-        let out = [p];
-        let code = 256;
+        while (i < data.length) {
+            const current = data[i];
+            let count = 1;
 
-        for (let i = 1; i < codes.length; i++) {
-            const k = codes[i];
-            let entry;
-            if (dict.has(k)) {
-                entry = dict.get(k);
-            } else if (k === code) {
-                entry = p + p.charAt(0);
-            } else {
-                return null; // Should not happen
+            while (i + count < data.length && data[i + count] === current && count < 255) {
+                count++;
             }
 
-            out.push(entry);
-            dict.set(code, p + entry.charAt(0));
-            code++;
-            p = entry;
+            if (count > 3) {
+                result.push(255, count, current);
+            } else {
+                for (let j = 0; j < count; j++) {
+                    result.push(current);
+                }
+            }
+
+            i += count;
         }
 
-        const decodedString = out.join('');
-        const bytes = new Uint8Array(decodedString.length);
-        for (let i = 0; i < decodedString.length; i++) {
-            bytes[i] = decodedString.charCodeAt(i);
+        return new Uint8Array(result);
+    }
+
+    static simpleDecompress(data) {
+        const result = [];
+        let i = 0;
+
+        while (i < data.length) {
+            if (data[i] === 255 && i + 2 < data.length) {
+                const count = data[i + 1];
+                const value = data[i + 2];
+
+                for (let j = 0; j < count; j++) {
+                    result.push(value);
+                }
+
+                i += 3;
+            } else {
+                result.push(data[i]);
+                i++;
+            }
         }
-        return bytes;
+
+        return new Uint8Array(result);
     }
 }
 
