@@ -831,7 +831,6 @@ function showResultsSection() {
     const resultsSection = $('resultsSection');
     if (resultsSection) {
         resultsSection.style.display = 'block';
-        resultsSection.classList.remove('hidden');
 
         setTimeout(() => {
             resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1715,6 +1714,40 @@ function setupEventListeners() {
 
 // ========== Additional Functions ==========
 
+function animateEmojiGrid() {
+    const sliderContainer = document.querySelector('.emoji-slider-container');
+    if (sliderContainer) {
+        // Start the animation shortly after the app loads to ensure layout is complete
+        setTimeout(() => {
+            const scrollHeight = sliderContainer.scrollHeight;
+            const clientHeight = sliderContainer.clientHeight;
+            const maxScrollTop = scrollHeight - clientHeight;
+
+            // Only animate if there's something to scroll
+            if (maxScrollTop > 0) {
+                // Define the animation sequence
+                const animationSequence = [
+                    { scrollTop: maxScrollTop, delay: 1200, behavior: 'smooth' }, // Scroll to bottom
+                    { scrollTop: 0, delay: 2500, behavior: 'smooth' }             // Scroll back to top
+                ];
+
+                let promise = Promise.resolve();
+                animationSequence.forEach(step => {
+                    promise = promise.then(() => {
+                        return new Promise(resolve => {
+                            setTimeout(() => {
+                                sliderContainer.scrollTo({ top: step.scrollTop, behavior: step.behavior });
+                                // Resolve after the scroll animation is expected to finish
+                                setTimeout(resolve, 1500);
+                            }, step.delay);
+                        });
+                    });
+                });
+            }
+        }, 800);
+    }
+}
+
 function checkPasswordStrength() {
     const passwordInput = $('password');
     const strengthIndicator = $('passwordStrength');
@@ -1844,6 +1877,8 @@ async function initApp() {
 
         console.log('Enhanced Emoji Cipher Pro with Multi-Emoji Support initialized successfully!');
         showToast('تم تحميل التطبيق المحسن مع دعم عدّة إيموجي بنجاح', 'success');
+
+        animateEmojiGrid();
 
     } catch (error) {
         console.error('Error initializing app:', error);
