@@ -104,7 +104,8 @@ function decode(text) {
         }
     }
 
-    for (let i = startIndex; i < chars.length; i++) {
+    let i = startIndex;
+    for (; i < chars.length; i++) {
         const char = chars[i];
         const byte = fromVariationSelector(char.codePointAt(0));
 
@@ -116,7 +117,7 @@ function decode(text) {
         }
     }
 
-    return new Uint8Array(decoded);
+    return { bytes: new Uint8Array(decoded), consumed: i };
 }
 
 // ========== Enhanced Compression System with UTF-8 Support ==========
@@ -163,7 +164,7 @@ class AdvancedCompression {
                 count++;
             }
 
-            if (count > 3 || current === 255) {
+            if (count > 3) {
                 result.push(255, count, current);
             } else {
                 for (let j = 0; j < count; j++) {
@@ -405,7 +406,7 @@ async function encodeText() {
 
 async function decodeSingleMessage(src, { showToasts = true } = {}) {
     try {
-        const combinedData = decode(src);
+        const { bytes: combinedData, consumed } = decode(src);
         if (combinedData.length === 0) {
             if (showToasts) showToast('لم يتم العثور على بيانات مشفرة صالحة', 'error');
             return null;
@@ -498,7 +499,8 @@ async function decodeSingleMessage(src, { showToasts = true } = {}) {
             stats: {
                 originalSize: header.originalSize,
                 compressedSize: header.compressedSize
-            }
+            },
+            consumed: consumed
         };
 
     } catch (error) {
@@ -520,91 +522,78 @@ async function decodeText() {
         return;
     }
 
-    const src = inputText.value.trim();
+    const src = inputText.value;
     if (!src) {
-        showToast('يرجى إدخال نص مشفر', 'error');
+        showToast('يرجى إدخال نص لفك تشفيره', 'error');
         return;
     }
 
     showToast('جاري فك التشفير...', 'info', 1000);
 
-    const result = await decodeSingleMessage(src);
-
-    if (result && result.text !== null) {
-        output.value = result.text;
-        output.classList.add('has-content');
-
-        updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
-
-        if (appSettings.autoCopyDecodedText) {
-            await copyToClipboard(result.text);
-            showToast(`تم فك تشفير النص ونسخ النتيجة تلقائياً`, 'success');
-        } else {
-            showToast(`تم فك تشفير النص بنجاح`, 'success');
-        }
-
-        showResultsSection();
-    }
-}
-
-async function decodeMultipleText() {
-    const inputText = $('inputText');
-    const output = $('output');
-
-    if (!inputText || !output) {
-        showToast('عناصر الواجهة غير متوفرة', 'error');
-        return;
-    }
-
-    const src = inputText.value.trim();
-    if (!src) {
-        showToast('يرجى إدخال نص مشفر', 'error');
-        return;
-    }
-
-    showToast('جاري البحث عن رسائل متعددة...', 'info');
-
     const emojiRegex = new RegExp(`(${emojiList.map(e => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'g');
-
     const matches = [...src.matchAll(emojiRegex)];
 
     if (matches.length === 0) {
-        showToast('لم يتم العثور على أي إيموجي معروف للبدء به.', 'error');
+        showToast('لم يتم العثور على أي رسالة مشفرة صالحة.', 'warning');
+        output.value = src;
         return;
     }
 
-    let decodedCount = 0;
-    let decodedOutputs = [];
+    let result_parts = [];
+    let last_index = 0;
+    let foundMessage = false;
     let totalOriginalSize = 0;
     let totalCompressedSize = 0;
 
     for (const match of matches) {
+        if (match.index > last_index) {
+            result_parts.push(src.substring(last_index, match.index));
+        }
+
         const potentialMessage = src.substring(match.index);
         try {
             const result = await decodeSingleMessage(potentialMessage, { showToasts: false });
             if (result && result.text) {
-                decodedOutputs.push(result.text);
-                decodedCount++;
+                result_parts.push(result.text);
+                last_index = match.index + result.consumed;
+                foundMessage = true;
                 totalOriginalSize += result.stats.originalSize || 0;
                 totalCompressedSize += result.stats.compressedSize || 0;
+            } else {
+                result_parts.push(match[0]);
+                last_index = match.index + match[0].length;
             }
         } catch (e) {
             if (e.message === "Password required") {
                 showToast(`رسالة مشفرة بكلمة سر، يرجى إدخال كلمة السر ثم المحاولة مجدداً`, 'error');
                 return;
             }
-            console.log("Could not decode potential message at index " + match.index, e);
+            result_parts.push(match[0]);
+            last_index = match.index + match[0].length;
         }
     }
 
-    if (decodedCount > 0) {
-        output.value = `--- تم العثور على ${decodedCount} رسالة ---\n\n` + decodedOutputs.join('\n\n----------\n\n');
+    if (last_index < src.length) {
+        result_parts.push(src.substring(last_index));
+    }
+
+    if (foundMessage) {
+        const finalOutput = result_parts.join('');
+        output.value = finalOutput;
         output.classList.add('has-content');
-        updateStats(totalOriginalSize, totalCompressedSize, output.value.length);
-        showToast(`تم فك تشفير ${decodedCount} رسالة بنجاح.`, 'success');
+        updateStats(totalOriginalSize, totalCompressedSize, finalOutput.length);
+        addToHistory(src, finalOutput, 'decode');
+
+        if (appSettings.autoCopyDecodedText) {
+            await copyToClipboard(finalOutput);
+            showToast(`تم فك تشفير الرسائل ونسخ النتيجة تلقائياً`, 'success');
+        } else {
+            showToast(`تم فك تشفير الرسائل بنجاح`, 'success');
+        }
         showResultsSection();
     } else {
-        showToast('تم البحث ولكن لم يتم العثور على رسائل مشفرة صالحة.', 'warning');
+        output.value = src;
+        showToast('لم يتم العثور على رسائل مشفرة صالحة.', 'warning');
     }
 }
 
@@ -988,7 +977,7 @@ function resetEmojiList() {
 // ========== History Management ==========
 
 function addToHistory(text, result, operation) {
-    if (!appSettings.saveHistory || operation === 'decode') return;
+    if (!appSettings.saveHistory) return;
 
     const timestamp = new Date().toISOString();
     historyItems.unshift({
@@ -1045,19 +1034,21 @@ function renderHistory() {
         historyItem.className = 'history-item';
 
         const date = new Date(item.timestamp).toLocaleString('ar-EG');
+        const opText = item.operation === 'encode' ? 'تشفير' : 'فك تشفير';
+        const opColor = item.operation === 'encode' ? 'var(--primary)' : 'var(--secondary)';
         historyItem.innerHTML = `
             <div class="history-item-main">
                 <div class="history-item-info">
                     <div class="history-item-date">${date}</div>
                     <div class="history-item-text">${item.text}${item.text.length >= 100 ? '...' : ''}</div>
-                    <div class="history-item-op">تشفير</div>
+                    <div class="history-item-op" style="color: ${opColor};">${opText}</div>
                 </div>
                 <div class="history-item-emoji">${item.result.substring(0, 1)}</div>
             </div>
             <div class="history-item-actions">
-                <button class="icon-btn-sm copy-history-btn"><i class="far fa-copy"></i></button>
-                <button class="icon-btn-sm share-history-btn"><i class="fas fa-share-alt"></i></button>
-                <button class="icon-btn-sm restore-history-btn"><i class="fas fa-redo"></i></button>
+                <button class="icon-btn-sm copy-history-btn" title="نسخ"><i class="far fa-copy"></i></button>
+                <button class="icon-btn-sm share-history-btn" title="مشاركة"><i class="fas fa-share-alt"></i></button>
+                <button class="icon-btn-sm restore-history-btn" title="استعادة"><i class="fas fa-redo"></i></button>
             </div>
         `;
 
@@ -1431,11 +1422,9 @@ function setupEventListeners() {
     // Encode/Decode buttons
     const encodeBtn = $('encodeBtn');
     const decodeBtn = $('decodeBtn');
-    const decodeMultipleBtn = $('decodeMultipleBtn');
 
     if (encodeBtn) encodeBtn.addEventListener('click', encodeText);
     if (decodeBtn) decodeBtn.addEventListener('click', decodeText);
-    if (decodeMultipleBtn) decodeMultipleBtn.addEventListener('click', decodeMultipleText);
 
     // Input action buttons
     const deleteBtn = $('deleteBtn');
@@ -1727,8 +1716,8 @@ function animateEmojiGrid() {
             if (maxScrollTop > 0) {
                 // Define the animation sequence
                 const animationSequence = [
-                    { scrollTop: maxScrollTop, delay: 1200, behavior: 'smooth' }, // Scroll to bottom
-                    { scrollTop: 0, delay: 2500, behavior: 'smooth' }             // Scroll back to top
+                    { scrollTop: maxScrollTop, delay: 500, behavior: 'smooth' }, // Scroll to bottom
+                    { scrollTop: 0, delay: 1200, behavior: 'smooth' }             // Scroll back to top
                 ];
 
                 let promise = Promise.resolve();
@@ -1738,7 +1727,7 @@ function animateEmojiGrid() {
                             setTimeout(() => {
                                 sliderContainer.scrollTo({ top: step.scrollTop, behavior: step.behavior });
                                 // Resolve after the scroll animation is expected to finish
-                                setTimeout(resolve, 1500);
+                                setTimeout(resolve, 800);
                             }, step.delay);
                         });
                     });

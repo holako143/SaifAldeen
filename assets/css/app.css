@@ -549,12 +549,12 @@ label {
 }
 
 .emoji-item {
-    min-width: 90px;
-    height: 90px;
+    min-width: 100px;
+    height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 3.2rem;
+    font-size: 3.8rem;
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -1001,50 +1001,6 @@ body.sidebar-open {
     transform: scale(1.1);
 }
 
-/* ========== Input Wrappers and Actions ========== */
-.input-wrapper, .output-wrapper {
-    position: relative;
-    margin-top: 0.5rem;
-}
-
-#inputText, #output {
-    width: 100%;
-    min-height: 180px;
-    margin-bottom: 0.75rem;
-    padding-left: 65px; /* Make space for buttons */
-}
-
-#output {
-    min-height: 120px;
-}
-
-.input-actions, .output-actions {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
-
-.input-actions .icon-btn,
-.output-actions .icon-btn {
-    background: transparent;
-    border: none;
-    width: auto;
-    height: auto;
-    font-size: 0.9rem;
-    padding: 0.5rem;
-    color: var(--text-gray);
-    box-shadow: none;
-}
-
-.input-actions .icon-btn:hover,
-.output-actions .icon-btn:hover {
-    color: var(--primary);
-    background: rgba(102, 126, 234, 0.1);
-}
 
 /* ========== Modals ========== */
 .modal-content {
@@ -1177,42 +1133,6 @@ body.sidebar-open {
     background: linear-gradient(135deg, #64748b, #475569);
 }
 
-/* ========== Input Wrappers and Actions ========== */
-.input-wrapper, .output-wrapper {
-    position: relative;
-    margin-top: 0.5rem;
-}
-
-#inputText, #output {
-    width: 100%;
-    min-height: 180px;
-    margin-bottom: 0.75rem;
-    padding-left: 55px; /* Make space for buttons */
-}
-
-#output {
-    min-height: 120px;
-}
-
-.input-actions {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
-
-.output-actions {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
 
 .icon-btn {
     background: rgba(241, 245, 249, 0.8);
@@ -1301,4 +1221,51 @@ body.sidebar-open {
 #scannerMessage {
     margin-bottom: 1.5rem;
     font-weight: 500;
+}
+
+/* ========== Textarea with Inline Icons ========== */
+.textarea-container {
+    position: relative;
+}
+
+.textarea-icons {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 2;
+}
+
+.icon-btn-inline {
+    background: transparent;
+    border: none;
+    color: var(--text-gray);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+}
+
+.icon-btn-inline:hover {
+    color: var(--primary);
+    background-color: rgba(102, 126, 234, 0.1);
+}
+
+.dark .icon-btn-inline {
+    color: var(--text-dark);
+}
+
+.dark .icon-btn-inline:hover {
+    background-color: rgba(102, 126, 234, 0.2);
+}
+
+#inputText, #output {
+    padding-right: 55px; /* Make space for buttons on the right for RTL */
 }

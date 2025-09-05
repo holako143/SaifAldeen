@@ -162,16 +162,18 @@
             
             <!-- Input Section -->
             <div style="margin-bottom: 1.5rem;">
-                <div class="input-actions">
-                    <button id="pasteBtn" class="icon-btn" title="لصق">
-                        <i class="fas fa-paste"></i>
-                    </button>
-                    <button id="deleteBtn" class="icon-btn" title="حذف الكل">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
                 <label for="inputText">النص المراد تشفيره أو فك تشفيره</label>
-                <textarea id="inputText" placeholder="أدخل النص هنا..." style="width: 100%; min-height: 180px; margin-bottom: 0.75rem; margin-top: 0.5rem;"></textarea>
+                <div class="textarea-container">
+                    <textarea id="inputText" placeholder="أدخل النص هنا..." style="width: 100%; min-height: 180px; margin-bottom: 0.75rem; margin-top: 0.5rem;"></textarea>
+                    <div class="textarea-icons">
+                        <button id="pasteBtn" class="icon-btn-inline" title="لصق">
+                            <i class="fas fa-paste"></i>
+                        </button>
+                        <button id="deleteBtn" class="icon-btn-inline" title="حذف الكل">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <div style="font-size: 0.875rem; color: #64748b;">
@@ -217,10 +219,6 @@
                     <i class="fas fa-unlock"></i>
                     فك التشفير
                 </button>
-                <button id="decodeMultipleBtn" class="btn-secondary" style="flex: 1;">
-                    <i class="fas fa-search-plus"></i>
-                    فك تشفير متعدد
-                </button>
             </div>
             
             <!-- Results Section -->
@@ -230,7 +228,17 @@
                     <h3>النتيجة</h3>
                 </div>
                 
-                <textarea id="output" placeholder="النتيجة ستظهر هنا..." readonly style="width: 100%; min-height: 120px; margin-bottom: 1rem;"></textarea>
+                <div class="textarea-container">
+                    <textarea id="output" placeholder="النتيجة ستظهر هنا..." readonly style="width: 100%; min-height: 120px; margin-bottom: 1rem;"></textarea>
+                    <div class="textarea-icons">
+                        <button id="copyBtn" class="icon-btn-inline" title="نسخ النتيجة">
+                            <i class="far fa-copy"></i>
+                        </button>
+                        <button id="shareBtn" class="icon-btn-inline" title="مشاركة">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Statistics -->
                 <div id="statsSection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
@@ -242,18 +250,6 @@
                         <div style="font-size: 0.75rem; color: #059669;">بعد المعالجة</div>
                         <div id="compressedSize" style="font-weight: bold;">0 بايت</div>
                     </div>
-                </div>
-
-                <!-- Copy and Share Buttons -->
-                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                    <button id="copyBtn" class="btn-secondary" style="flex: 1;">
-                        <i class="far fa-copy"></i>
-                        نسخ النتيجة
-                    </button>
-                    <button id="shareBtn" class="btn-primary" style="flex: 1;">
-                        <i class="fas fa-share-alt"></i>
-                        مشاركة
-                    </button>
                 </div>
             </div>
         </div>
