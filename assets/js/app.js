@@ -830,11 +830,18 @@ function updateStats(originalSize, compressedSize, textLength) {
 function showResultsSection() {
     const resultsSection = $('resultsSection');
     if (resultsSection) {
-        resultsSection.style.display = 'block';
+        resultsSection.classList.add('visible');
 
         setTimeout(() => {
             resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 100);
+    }
+}
+
+function hideResultsSection() {
+    const resultsSection = $('resultsSection');
+    if (resultsSection) {
+        resultsSection.classList.remove('visible');
     }
 }
 
@@ -1447,7 +1454,10 @@ function setupEventListeners() {
     // Text input monitoring
     const inputText = $('inputText');
     if (inputText) {
-        inputText.addEventListener('input', updateCharCount);
+        inputText.addEventListener('input', () => {
+            updateCharCount();
+            hideResultsSection();
+        });
 
         // Custom paste handler to prevent browser sanitization of invisible characters
         inputText.addEventListener('paste', (event) => {
