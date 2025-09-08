@@ -72,6 +72,8 @@
 .fa-eye-slash::before { content: "\f070"; }
 .fa-paste::before { content: "\f0ea"; }
 .fa-share-alt::before { content: "\f1e0"; }
+.fa-exchange-alt::before { content: "\f362"; }
+.fa-layer-group::before { content: "\f5fd"; }
 .fa-grip-vertical::before { content: "\f58d"; }
 
 /* ========== CSS Variables ========== */
@@ -577,60 +579,8 @@ label {
     display: none;
 }
 
-/* ========== Results Section ========== */
-.results-section {
-    background: rgba(248, 250, 252, 0.8);
-    border: 1px solid rgba(226, 232, 240, 0.5);
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    margin-top: 2rem;
-    display: block;
-    position: relative;
-}
-
-.results-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--success), var(--info));
-}
-
-.dark .results-section {
-    background: rgba(51, 65, 85, 0.8);
-    border-color: rgba(71, 85, 105, 0.5);
-}
-
-#output.has-content {
-    border-left: 4px solid var(--success);
-    background: rgba(240, 253, 244, 0.8);
-}
-
-.dark #output.has-content {
-    background: rgba(6, 78, 59, 0.8);
-}
-
 /* ========== Statistics ========== */
-#statsSection > div {
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(226, 232, 240, 0.5);
-    border-radius: var(--radius-lg);
-    padding: 1rem;
-    text-align: center;
-    transition: all var(--transition);
-}
-
-#statsSection > div:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-}
-
-.dark #statsSection > div {
-    background: rgba(15, 23, 42, 0.8);
-    border-color: rgba(71, 85, 105, 0.5);
-}
+/* Styles moved to .stat-item */
 
 /* ========== Settings ========== */
 .setting-item {
@@ -1001,50 +951,7 @@ body.sidebar-open {
     transform: scale(1.1);
 }
 
-/* ========== Input Wrappers and Actions ========== */
-.input-wrapper, .output-wrapper {
-    position: relative;
-    margin-top: 0.5rem;
-}
-
-#inputText, #output {
-    width: 100%;
-    min-height: 180px;
-    margin-bottom: 0.75rem;
-    padding-left: 65px; /* Make space for buttons */
-}
-
-#output {
-    min-height: 120px;
-}
-
-.input-actions, .output-actions {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
-
-.input-actions .icon-btn,
-.output-actions .icon-btn {
-    background: transparent;
-    border: none;
-    width: auto;
-    height: auto;
-    font-size: 0.9rem;
-    padding: 0.5rem;
-    color: var(--text-gray);
-    box-shadow: none;
-}
-
-.input-actions .icon-btn:hover,
-.output-actions .icon-btn:hover {
-    color: var(--primary);
-    background: rgba(102, 126, 234, 0.1);
-}
+/* This section was duplicated and is now handled by .io-box and other new classes */
 
 /* ========== Modals ========== */
 .modal-content {
@@ -1073,7 +980,7 @@ body.sidebar-open {
 /* ========== Responsive Design ========== */
 @media (max-width: 768px) {
     .container {
-        padding: 1rem;
+        padding: 0.5rem;
         margin-top: 80px;
     }
     
@@ -1087,6 +994,14 @@ body.sidebar-open {
         margin-bottom: 1.5rem;
     }
     
+    .cipher-card {
+        padding: 1rem;
+    }
+
+    .cipher-card textarea {
+        min-height: 150px;
+    }
+
     .emoji-item {
         min-width: 50px;
         height: 50px;
@@ -1123,10 +1038,34 @@ body.sidebar-open {
         padding: 1.25rem;
         border-radius: var(--radius-lg);
     }
+
+    .cipher-card {
+        padding: 1rem 0.75rem;
+    }
+
+    .cipher-card textarea {
+        min-height: 120px;
+    }
     
     .btn-primary, .btn-secondary {
-        padding: 0.75rem 1.5rem;
+        padding: 0.75rem 1rem;
         font-size: 0.9rem;
+    }
+
+    .action-buttons-container {
+        gap: 0.75rem;
+    }
+
+    .action-buttons-container .icon-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1rem;
+    }
+
+    .input-actions, .output-actions {
+        top: 0.75rem;
+        right: 0.75rem;
+        gap: 0.5rem;
     }
     
     .emoji-item {
@@ -1177,70 +1116,7 @@ body.sidebar-open {
     background: linear-gradient(135deg, #64748b, #475569);
 }
 
-/* ========== Input Wrappers and Actions ========== */
-.input-wrapper, .output-wrapper {
-    position: relative;
-    margin-top: 0.5rem;
-}
-
-#inputText, #output {
-    width: 100%;
-    min-height: 180px;
-    margin-bottom: 0.75rem;
-    padding-left: 55px; /* Make space for buttons */
-}
-
-#output {
-    min-height: 120px;
-}
-
-.input-actions {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
-
-.output-actions {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
-
-.icon-btn {
-    background: rgba(241, 245, 249, 0.8);
-    color: var(--text-gray);
-    border: 1px solid rgba(226, 232, 240, 0.5);
-    border-radius: var(--radius);
-    width: 40px;
-    height: 40px;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: all var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.icon-btn:hover {
-    background: var(--primary);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
-}
-
-.dark .icon-btn {
-    background: rgba(51, 65, 85, 0.8);
-    border-color: rgba(71, 85, 105, 0.5);
-    color: var(--text-dark);
-}
+/* This section was duplicated and is now handled by .io-box and other new classes */
 
 /* ========== Modals ========== */
 .modal-content {
@@ -1301,4 +1177,164 @@ body.sidebar-open {
 #scannerMessage {
     margin-bottom: 1.5rem;
     font-weight: 500;
+}
+
+/* ========== Card-Based Cipher Layout ========== */
+
+.textarea-wrapper {
+    position: relative;
+}
+
+.cipher-card {
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    background: rgba(248, 250, 252, 0.95);
+    margin-bottom: 1.5rem;
+}
+
+.dark .cipher-card {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(71, 85, 105, 0.5);
+}
+
+.cipher-card label {
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+#input-card {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.dark #input-card {
+    background: rgba(15, 23, 42, 0.95);
+}
+
+.stats-grid {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.stat-item {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius);
+    background-color: transparent;
+    border: 1px solid;
+    font-weight: 500;
+}
+
+.stat-item .stat-label {
+    display: none;
+}
+
+.stat-item .stat-value {
+    font-weight: 500;
+}
+
+#statsSection .stat-item:nth-child(1) {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+#statsSection .stat-item:nth-child(2) {
+    color: var(--secondary);
+    border-color: var(--secondary);
+}
+
+.input-meta {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.input-meta .char-count,
+.input-meta .size-estimate {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius);
+    background-color: var(--bg-gray);
+    color: var(--primary);
+    font-weight: 500;
+    border: 1px solid var(--primary);
+}
+
+.dark .input-meta .char-count,
+.dark .input-meta .size-estimate {
+    background-color: var(--bg-dark);
+}
+
+.cipher-card textarea {
+    min-height: 180px;
+    resize: vertical; /* Allow manual resize as well */
+    padding-left: 60px; /* Make space for buttons on the left */
+    padding-right: 1rem; /* Default padding for the other side */
+}
+
+.action-buttons-container {
+    display: flex; /* This was missing, but implied by justify-content */
+    gap: 1rem; /* Increased spacing */
+    justify-content: center; /* Center the icon buttons */
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+}
+
+.action-buttons-container .icon-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+    flex-grow: 0;
+    flex-basis: 50px;
+}
+
+/* Dynamic Card Visibility */
+#resultsSection {
+    display: none;
+}
+
+.dynamic-card-container.show-result #resultsSection {
+    display: block;
+}
+
+.dynamic-card-container.show-result #emoji-card {
+    display: none;
+}
+
+.custom-emoji-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.custom-emoji-container input {
+    flex: 1;
+}
+
+.input-actions, .output-actions {
+    position: absolute;
+    top: 1.25rem;
+    left: 1.25rem; /* Moved to the left */
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 2;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.textarea-wrapper .icon-btn {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--text-gray);
+}
+
+.textarea-wrapper .icon-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--primary);
 }

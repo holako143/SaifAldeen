@@ -384,8 +384,11 @@ async function encodeText() {
 
         output.value = result;
         output.classList.add('has-content');
+        autoGrowTextarea(output);
 
-        updateStats(header.originalSize, header.compressedSize, text.length);
+        setTimeout(() => {
+            updateStats(header.originalSize, header.compressedSize, text.length);
+        }, 0);
         addToHistory(text, result, 'encode');
 
         if (appSettings.autoCopyEncodedEmoji) {
@@ -395,7 +398,7 @@ async function encodeText() {
             showToast('تم تشفير النص بنجاح', 'success');
         }
 
-        showResultsSection();
+        showResultCard(true);
 
     } catch (error) {
         console.error('Encoding error:', error);
@@ -533,8 +536,11 @@ async function decodeText() {
     if (result && result.text !== null) {
         output.value = result.text;
         output.classList.add('has-content');
+        autoGrowTextarea(output);
 
-        updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
+        setTimeout(() => {
+            updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
+        }, 0);
 
         if (appSettings.autoCopyDecodedText) {
             await copyToClipboard(result.text);
@@ -543,7 +549,7 @@ async function decodeText() {
             showToast(`تم فك تشفير النص بنجاح`, 'success');
         }
 
-        showResultsSection();
+        showResultCard(true);
     }
 }
 
@@ -600,9 +606,12 @@ async function decodeMultipleText() {
     if (decodedCount > 0) {
         output.value = `--- تم العثور على ${decodedCount} رسالة ---\n\n` + decodedOutputs.join('\n\n----------\n\n');
         output.classList.add('has-content');
-        updateStats(totalOriginalSize, totalCompressedSize, output.value.length);
+        autoGrowTextarea(output);
+        setTimeout(() => {
+            updateStats(totalOriginalSize, totalCompressedSize, output.value.length);
+        }, 0);
         showToast(`تم فك تشفير ${decodedCount} رسالة بنجاح.`, 'success');
-        showResultsSection();
+        showResultCard(true);
     } else {
         showToast('تم البحث ولكن لم يتم العثور على رسائل مشفرة صالحة.', 'warning');
     }
@@ -759,6 +768,28 @@ function showShareModal(options, content) {
 
 // ========== UI Functions ==========
 
+function autoGrowTextarea(element) {
+    if (!element) return;
+    element.style.height = 'auto';
+    element.style.height = (element.scrollHeight) + 'px';
+}
+
+function showResultCard(show) {
+    const container = document.querySelector('.dynamic-card-container');
+    if (container) {
+        container.classList.toggle('show-result', show);
+    }
+}
+
+function swapDynamicCards() {
+    const container = document.querySelector('.dynamic-card-container');
+    if (container) {
+        const isResultVisible = container.classList.contains('show-result');
+        showResultCard(!isResultVisible);
+        showToast(isResultVisible ? 'تم عرض بطاقة الإيموجي' : 'تم عرض بطاقة النتيجة', 'info');
+    }
+}
+
 function showToast(message, type = 'success', duration = 3000) {
     if (!appSettings.showNotifications) return;
 
@@ -827,17 +858,6 @@ function updateStats(originalSize, compressedSize, textLength) {
     }
 }
 
-function showResultsSection() {
-    const resultsSection = $('resultsSection');
-    if (resultsSection) {
-        resultsSection.style.display = 'block';
-
-        setTimeout(() => {
-            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
-    }
-}
-
 async function copyToClipboard(text = null) {
     const output = $('output');
     const textToCopy = text || (output ? output.value : '');
@@ -861,7 +881,7 @@ async function copyToClipboard(text = null) {
         }
     } catch (error) {
         console.error('Copy failed:', error);
-        showToast('فشل في نسخ النص', 'error');
+        showToast(`فشل في نسخ النص: ${error.message}`, 'error');
     }
 }
 
@@ -1101,6 +1121,12 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
+
+    // Hide results section when switching tabs
+    const resultsSection = $('resultsSection');
+    if (resultsSection) {
+        resultsSection.classList.remove('visible');
+    }
 
     const targetTab = $(`${tabName}Tab`);
     if (targetTab) {
@@ -1432,10 +1458,12 @@ function setupEventListeners() {
     const encodeBtn = $('encodeBtn');
     const decodeBtn = $('decodeBtn');
     const decodeMultipleBtn = $('decodeMultipleBtn');
+    const swapBtn = $('swapBtn');
 
     if (encodeBtn) encodeBtn.addEventListener('click', encodeText);
     if (decodeBtn) decodeBtn.addEventListener('click', decodeText);
     if (decodeMultipleBtn) decodeMultipleBtn.addEventListener('click', decodeMultipleText);
+    if (swapBtn) swapBtn.addEventListener('click', swapDynamicCards);
 
     // Input action buttons
     const deleteBtn = $('deleteBtn');
@@ -1447,7 +1475,10 @@ function setupEventListeners() {
     // Text input monitoring
     const inputText = $('inputText');
     if (inputText) {
-        inputText.addEventListener('input', updateCharCount);
+        inputText.addEventListener('input', () => {
+            updateCharCount();
+            autoGrowTextarea(inputText);
+        });
 
         // Custom paste handler to prevent browser sanitization of invisible characters
         inputText.addEventListener('paste', (event) => {
@@ -1803,6 +1834,7 @@ function clearInput() {
     if (inputText) {
         inputText.value = '';
         updateCharCount();
+        showResultCard(false); // Hide result card and show emoji card
         showToast('تم مسح حقل الإدخال', 'info');
     }
 }
@@ -1818,12 +1850,22 @@ async function pasteFromClipboard() {
 
     try {
         const text = await navigator.clipboard.readText();
-        inputText.value += text;
-        updateCharCount();
+        const { selectionStart, selectionEnd } = inputText;
+
+        inputText.value =
+            inputText.value.substring(0, selectionStart) +
+            text +
+            inputText.value.substring(selectionEnd);
+
+        inputText.selectionStart = inputText.selectionEnd = selectionStart + text.length;
+
+        inputText.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+
         showToast('تم لصق النص من الحافظة', 'success');
+        inputText.focus();
     } catch (err) {
         console.error('Failed to read clipboard contents: ', err);
-        showToast('فشل في قراءة الحافظة. يرجى منح الإذن.', 'error');
+        showToast(`فشل في قراءة الحافظة: ${err.message}`, 'error');
     }
 }
 
