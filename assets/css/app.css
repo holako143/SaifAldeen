@@ -72,6 +72,7 @@
 .fa-eye-slash::before { content: "\f070"; }
 .fa-paste::before { content: "\f0ea"; }
 .fa-share-alt::before { content: "\f1e0"; }
+.fa-exchange-alt::before { content: "\f362"; }
 .fa-grip-vertical::before { content: "\f58d"; }
 
 /* ========== CSS Variables ========== */
@@ -577,60 +578,8 @@ label {
     display: none;
 }
 
-/* ========== Results Section ========== */
-.results-section {
-    background: rgba(248, 250, 252, 0.8);
-    border: 1px solid rgba(226, 232, 240, 0.5);
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    margin-top: 2rem;
-    display: block;
-    position: relative;
-}
-
-.results-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--success), var(--info));
-}
-
-.dark .results-section {
-    background: rgba(51, 65, 85, 0.8);
-    border-color: rgba(71, 85, 105, 0.5);
-}
-
-#output.has-content {
-    border-left: 4px solid var(--success);
-    background: rgba(240, 253, 244, 0.8);
-}
-
-.dark #output.has-content {
-    background: rgba(6, 78, 59, 0.8);
-}
-
 /* ========== Statistics ========== */
-#statsSection > div {
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(226, 232, 240, 0.5);
-    border-radius: var(--radius-lg);
-    padding: 1rem;
-    text-align: center;
-    transition: all var(--transition);
-}
-
-#statsSection > div:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-}
-
-.dark #statsSection > div {
-    background: rgba(15, 23, 42, 0.8);
-    border-color: rgba(71, 85, 105, 0.5);
-}
+/* Styles moved to .stat-item */
 
 /* ========== Settings ========== */
 .setting-item {
@@ -1001,50 +950,7 @@ body.sidebar-open {
     transform: scale(1.1);
 }
 
-/* ========== Input Wrappers and Actions ========== */
-.input-wrapper, .output-wrapper {
-    position: relative;
-    margin-top: 0.5rem;
-}
-
-#inputText, #output {
-    width: 100%;
-    min-height: 180px;
-    margin-bottom: 0.75rem;
-    padding-left: 65px; /* Make space for buttons */
-}
-
-#output {
-    min-height: 120px;
-}
-
-.input-actions, .output-actions {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
-
-.input-actions .icon-btn,
-.output-actions .icon-btn {
-    background: transparent;
-    border: none;
-    width: auto;
-    height: auto;
-    font-size: 0.9rem;
-    padding: 0.5rem;
-    color: var(--text-gray);
-    box-shadow: none;
-}
-
-.input-actions .icon-btn:hover,
-.output-actions .icon-btn:hover {
-    color: var(--primary);
-    background: rgba(102, 126, 234, 0.1);
-}
+/* This section was duplicated and is now handled by .io-box and other new classes */
 
 /* ========== Modals ========== */
 .modal-content {
@@ -1177,70 +1083,7 @@ body.sidebar-open {
     background: linear-gradient(135deg, #64748b, #475569);
 }
 
-/* ========== Input Wrappers and Actions ========== */
-.input-wrapper, .output-wrapper {
-    position: relative;
-    margin-top: 0.5rem;
-}
-
-#inputText, #output {
-    width: 100%;
-    min-height: 180px;
-    margin-bottom: 0.75rem;
-    padding-left: 55px; /* Make space for buttons */
-}
-
-#output {
-    min-height: 120px;
-}
-
-.input-actions {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
-
-.output-actions {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
-
-.icon-btn {
-    background: rgba(241, 245, 249, 0.8);
-    color: var(--text-gray);
-    border: 1px solid rgba(226, 232, 240, 0.5);
-    border-radius: var(--radius);
-    width: 40px;
-    height: 40px;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: all var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.icon-btn:hover {
-    background: var(--primary);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
-}
-
-.dark .icon-btn {
-    background: rgba(51, 65, 85, 0.8);
-    border-color: rgba(71, 85, 105, 0.5);
-    color: var(--text-dark);
-}
+/* This section was duplicated and is now handled by .io-box and other new classes */
 
 /* ========== Modals ========== */
 .modal-content {
@@ -1301,4 +1144,136 @@ body.sidebar-open {
 #scannerMessage {
     margin-bottom: 1.5rem;
     font-weight: 500;
+}
+
+/* ========== New Cipher Tab Layout ========== */
+
+#resultsSection.visible {
+    display: block;
+}
+
+.io-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.io-box {
+    position: relative;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    background: rgba(248, 250, 252, 0.8);
+}
+
+.dark .io-box {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(71, 85, 105, 0.5);
+}
+
+.io-box label {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.io-box textarea {
+    min-height: 150px;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-left: 55px; /* space for buttons */
+}
+
+.input-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: var(--text-gray);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.dark .stat-item {
+    background: rgba(15, 23, 42, 0.8);
+    border-color: rgba(71, 85, 105, 0.5);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-gray);
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-weight: bold;
+}
+
+.action-buttons-container {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    align-items: center;
+}
+
+.action-buttons-container .btn-primary,
+.action-buttons-container .btn-secondary {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+}
+
+.action-buttons-container .icon-btn {
+    flex-shrink: 0;
+}
+
+.emoji-selection-container {
+    margin-top: 1rem;
+}
+
+.emoji-selection-container .emoji-slider-container {
+    height: auto;
+    max-height: 200px;
+}
+
+.emoji-selection-container .emoji-slider {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+}
+
+.custom-emoji-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.custom-emoji-container input {
+    flex: 1;
+}
+
+/* Cleanup old styles */
+.results-section {
+    padding: 0;
+    margin-top: 0;
+    border: none;
+    background: transparent;
+}
+
+.results-section::before {
+    display: none;
+}
+
+.dark .results-section {
+    background: transparent;
+    border: none;
 }

@@ -159,101 +159,87 @@
                 <i class="fas fa-pencil-alt"></i>
                 <h2>التشفير وفك التشفير</h2>
             </div>
-            
-            <!-- Input Section -->
-            <div style="margin-bottom: 1.5rem;">
-                <div class="input-actions">
-                    <button id="pasteBtn" class="icon-btn" title="لصق">
-                        <i class="fas fa-paste"></i>
-                    </button>
-                    <button id="deleteBtn" class="icon-btn" title="حذف الكل">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-                <label for="inputText">النص المراد تشفيره أو فك تشفيره</label>
-                <textarea id="inputText" placeholder="أدخل النص هنا..." style="width: 100%; min-height: 180px; margin-bottom: 0.75rem; margin-top: 0.5rem;"></textarea>
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <div style="font-size: 0.875rem; color: #64748b;">
-                        <span id="charCount">0</span> حرف
+
+            <!-- I/O Container -->
+            <div class="io-container">
+                <!-- Input Section -->
+                <div id="input-container" class="io-box">
+                    <div class="input-actions">
+                        <button id="pasteBtn" class="icon-btn" title="لصق">
+                            <i class="fas fa-paste"></i>
+                        </button>
+                        <button id="deleteBtn" class="icon-btn" title="حذف الكل">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
-                    <div style="font-size: 0.875rem; color: #64748b;">
-                        <span id="sizeEstimate">~0 بايت</span> مضغوط
+                    <label for="inputText">النص</label>
+                    <textarea id="inputText" placeholder="أدخل النص هنا..."></textarea>
+                    <div class="input-meta">
+                        <div class="char-count">
+                            <span id="charCount">0</span> حرف
+                        </div>
+                        <div class="size-estimate">
+                            <span id="sizeEstimate">~0 بايت</span> مضغوط
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section (Output) -->
+                <div class="results-section io-box" id="resultsSection">
+                    <div class="output-actions">
+                        <button id="copyBtn" class="icon-btn" title="نسخ النتيجة">
+                            <i class="far fa-copy"></i>
+                        </button>
+                        <button id="shareBtn" class="icon-btn" title="مشاركة">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                    </div>
+                    <label for="output">النتيجة</label>
+                    <textarea id="output" placeholder="النتيجة ستظهر هنا..." readonly></textarea>
+                    <!-- Statistics -->
+                    <div id="statsSection" class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-label">الحجم الأصلي</div>
+                            <div id="originalSize" class="stat-value">0 بايت</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">بعد المعالجة</div>
+                            <div id="compressedSize" class="stat-value">0 بايت</div>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Emoji Selection -->
-            <div style="margin-bottom: 1.5rem;">
-                <label>اختر إيموجي الحاوية</label>
-                
-                <div class="emoji-slider-container">
-                    <button class="slider-control prev" title="السابق">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                    
-                    <div class="emoji-slider" id="emojiSlider">
-                        <!-- Will be populated by JavaScript -->
-                    </div>
-                    
-                    <button class="slider-control next" title="التالي">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                </div>
-                
-                <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-                    <input id="customChar" placeholder="أو اكتب رمز مخصص" style="flex: 1;"/>
-                    <button id="addCustomEmoji" class="btn-secondary">إضافة</button>
-                </div>
-            </div>
-            
+
             <!-- Action Buttons -->
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
-                <button id="encodeBtn" class="btn-primary" style="flex: 1;">
+            <div class="action-buttons-container">
+                <button id="encodeBtn" class="btn-primary">
                     <i class="fas fa-lock"></i>
-                    تشفير النص
+                    تشفير
                 </button>
-                <button id="decodeBtn" class="btn-secondary" style="flex: 1;">
+                <button id="decodeBtn" class="btn-secondary">
                     <i class="fas fa-unlock"></i>
                     فك التشفير
                 </button>
-                <button id="decodeMultipleBtn" class="btn-secondary" style="flex: 1;">
+                <button id="decodeMultipleBtn" class="btn-secondary">
                     <i class="fas fa-search-plus"></i>
-                    فك تشفير متعدد
+                    فك متعدد
+                </button>
+                <button id="swapBtn" class="icon-btn" title="تبديل الإدخال/الإخراج">
+                    <i class="fas fa-exchange-alt"></i>
                 </button>
             </div>
-            
-            <!-- Results Section -->
-            <div class="results-section" id="resultsSection">
-                <div class="card-header">
-                    <i class="fas fa-code"></i>
-                    <h3>النتيجة</h3>
-                </div>
-                
-                <textarea id="output" placeholder="النتيجة ستظهر هنا..." readonly style="width: 100%; min-height: 120px; margin-bottom: 1rem;"></textarea>
 
-                <!-- Statistics -->
-                <div id="statsSection" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
-                    <div style="background: rgba(59, 130, 246, 0.1); padding: 0.75rem; border-radius: 0.75rem;">
-                        <div style="font-size: 0.75rem; color: #2563eb;">الحجم الأصلي</div>
-                        <div id="originalSize" style="font-weight: bold;">0 بايت</div>
-                    </div>
-                    <div style="background: rgba(16, 185, 129, 0.1); padding: 0.75rem; border-radius: 0.75rem;">
-                        <div style="font-size: 0.75rem; color: #059669;">بعد المعالجة</div>
-                        <div id="compressedSize" style="font-weight: bold;">0 بايت</div>
+            <!-- Emoji Selection -->
+            <div class="emoji-selection-container">
+                <label>اختر إيموجي الحاوية</label>
+                <div class="emoji-slider-container">
+                    <div class="emoji-slider" id="emojiSlider">
+                        <!-- Populated by JS -->
                     </div>
                 </div>
-
-                <!-- Copy and Share Buttons -->
-                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                    <button id="copyBtn" class="btn-secondary" style="flex: 1;">
-                        <i class="far fa-copy"></i>
-                        نسخ النتيجة
-                    </button>
-                    <button id="shareBtn" class="btn-primary" style="flex: 1;">
-                        <i class="fas fa-share-alt"></i>
-                        مشاركة
-                    </button>
+                <div class="custom-emoji-container">
+                    <input id="customChar" placeholder="أو اكتب رمز مخصص"/>
+                    <button id="addCustomEmoji" class="btn-secondary">إضافة</button>
                 </div>
             </div>
         </div>

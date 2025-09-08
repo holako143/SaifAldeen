@@ -759,6 +759,29 @@ function showShareModal(options, content) {
 
 // ========== UI Functions ==========
 
+function swapIO() {
+    const inputText = $('inputText');
+    const output = $('output');
+
+    if (!inputText || !output) return;
+
+    const tempValue = inputText.value;
+    inputText.value = output.value;
+    output.value = tempValue;
+
+    // Trigger input event to update char count for the input box
+    inputText.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+
+    // Clear the output's "has-content" class if it's now empty
+    if (output.value) {
+        output.classList.add('has-content');
+    } else {
+        output.classList.remove('has-content');
+    }
+
+    showToast('تم تبديل محتوى مربعي النص', 'info');
+}
+
 function showToast(message, type = 'success', duration = 3000) {
     if (!appSettings.showNotifications) return;
 
@@ -830,7 +853,7 @@ function updateStats(originalSize, compressedSize, textLength) {
 function showResultsSection() {
     const resultsSection = $('resultsSection');
     if (resultsSection) {
-        resultsSection.style.display = 'block';
+        resultsSection.classList.add('visible');
 
         setTimeout(() => {
             resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1101,6 +1124,12 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
+
+    // Hide results section when switching tabs
+    const resultsSection = $('resultsSection');
+    if (resultsSection) {
+        resultsSection.classList.remove('visible');
+    }
 
     const targetTab = $(`${tabName}Tab`);
     if (targetTab) {
@@ -1432,10 +1461,12 @@ function setupEventListeners() {
     const encodeBtn = $('encodeBtn');
     const decodeBtn = $('decodeBtn');
     const decodeMultipleBtn = $('decodeMultipleBtn');
+    const swapBtn = $('swapBtn');
 
     if (encodeBtn) encodeBtn.addEventListener('click', encodeText);
     if (decodeBtn) decodeBtn.addEventListener('click', decodeText);
     if (decodeMultipleBtn) decodeMultipleBtn.addEventListener('click', decodeMultipleText);
+    if (swapBtn) swapBtn.addEventListener('click', swapIO);
 
     // Input action buttons
     const deleteBtn = $('deleteBtn');
@@ -1818,9 +1849,15 @@ async function pasteFromClipboard() {
 
     try {
         const text = await navigator.clipboard.readText();
-        inputText.value += text;
-        updateCharCount();
+        const { selectionStart, selectionEnd } = inputText;
+
+        document.execCommand("insertText", false, text);
+
+        // Manually trigger an 'input' event to update char count and other listeners
+        inputText.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+
         showToast('تم لصق النص من الحافظة', 'success');
+        inputText.focus();
     } catch (err) {
         console.error('Failed to read clipboard contents: ', err);
         showToast('فشل في قراءة الحافظة. يرجى منح الإذن.', 'error');
