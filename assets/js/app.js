@@ -1824,31 +1824,27 @@ function clearInput() {
     }
 }
 
-async function pasteFromClipboard() {
+function pasteFromClipboard() {
     const inputText = $('inputText');
     if (!inputText) return;
 
-    // The modern Clipboard API requires a secure context (HTTPS) and user activation (a click).
-    if (!navigator.clipboard || !navigator.clipboard.readText) {
-        showToast('متصفحك لا يدعم لصق النص تلقائياً أو أن الصفحة ليست آمنة (HTTPS).', 'warning');
-        return;
-    }
+    // Set focus on the textarea first.
+    inputText.focus();
 
+    // Use the deprecated but more reliable execCommand for paste.
+    // This leverages the browser's native paste functionality.
     try {
-        const text = await navigator.clipboard.readText();
-        inputText.value = text; // Replace content as requested
-        updateCharCount();
-        showToast('تم لصق النص من الحافظة بنجاح', 'success');
-    } catch (err) {
-        console.error('Clipboard read failed:', err);
-        // Provide specific feedback based on the error.
-        if (err.name === 'NotAllowedError') {
-            // This is a common error if the user denies the permission prompt.
-            showToast('فشل اللصق. يرجى منح إذن الوصول إلى الحافظة عند طلبه.', 'error');
+        const successful = document.execCommand('paste');
+        if (!successful) {
+            // Fallback for browsers where execCommand fails or is not supported.
+            showToast('فشل اللصق. يرجى استخدام Ctrl+V للصق.', 'error');
         } else {
-            // For other errors, show a generic message.
-            showToast('فشل في قراءة الحافظة. قد تكون المشكلة في المتصفح أو الإعدادات.', 'error');
+            // The 'input' event listener on the textarea will handle the rest.
+            showToast('تم لصق النص بنجاح', 'success');
         }
+    } catch (err) {
+        console.error('Paste command failed:', err);
+        showToast('فشل اللصق. يرجى استخدام Ctrl+V للصق.', 'error');
     }
 }
 
@@ -1857,21 +1853,27 @@ function applySettings() {
     changeFontSize(appSettings.fontSize);
     document.body.classList.add(`theme-${appSettings.themeColor}`);
 
+    // Main settings tab
     const themeSelector = $('themeSelector');
     const fontSizeSelector = $('fontSizeSelector');
     const autoThemeToggle = $('autoThemeToggle');
     const darkThemeToggle = $('darkThemeToggle');
-    const encryptionStrengthSelect = $('encryptionStrength');
-    const autoCopyEncodedEmoji = $('autoCopyEncodedEmoji');
-    const autoCopyDecodedText = $('autoCopyDecodedText');
 
     if (themeSelector) themeSelector.value = appSettings.themeColor;
     if (fontSizeSelector) fontSizeSelector.value = appSettings.fontSize;
     if (autoThemeToggle) autoThemeToggle.checked = appSettings.theme === 'auto';
     if (darkThemeToggle) darkThemeToggle.checked = appSettings.theme === 'dark';
+
+    // Sidebar advanced options
+    const encryptionStrengthSelect = $('encryptionStrength');
+    const autoCopyEncodedEmoji = $('autoCopyEncodedEmoji');
+    const autoCopyDecodedText = $('autoCopyDecodedText');
+    const showNotifications = $('showNotifications');
+
     if (encryptionStrengthSelect) encryptionStrengthSelect.value = appSettings.encryptionStrength;
     if (autoCopyEncodedEmoji) autoCopyEncodedEmoji.checked = appSettings.autoCopyEncodedEmoji;
     if (autoCopyDecodedText) autoCopyDecodedText.checked = appSettings.autoCopyDecodedText;
+    if (showNotifications) showNotifications.checked = appSettings.showNotifications;
 }
 
 // ========== App Initialization ==========
