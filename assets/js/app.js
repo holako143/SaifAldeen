@@ -395,7 +395,7 @@ async function encodeText() {
             showToast('تم تشفير النص بنجاح', 'success');
         }
 
-        showResultsSection();
+        showResultCard(true);
 
     } catch (error) {
         console.error('Encoding error:', error);
@@ -543,7 +543,7 @@ async function decodeText() {
             showToast(`تم فك تشفير النص بنجاح`, 'success');
         }
 
-        showResultsSection();
+        showResultCard(true);
     }
 }
 
@@ -602,7 +602,7 @@ async function decodeMultipleText() {
         output.classList.add('has-content');
         updateStats(totalOriginalSize, totalCompressedSize, output.value.length);
         showToast(`تم فك تشفير ${decodedCount} رسالة بنجاح.`, 'success');
-        showResultsSection();
+        showResultCard(true);
     } else {
         showToast('تم البحث ولكن لم يتم العثور على رسائل مشفرة صالحة.', 'warning');
     }
@@ -759,27 +759,20 @@ function showShareModal(options, content) {
 
 // ========== UI Functions ==========
 
-function swapIO() {
-    const inputText = $('inputText');
-    const output = $('output');
-
-    if (!inputText || !output) return;
-
-    const tempValue = inputText.value;
-    inputText.value = output.value;
-    output.value = tempValue;
-
-    // Trigger input event to update char count for the input box
-    inputText.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-
-    // Clear the output's "has-content" class if it's now empty
-    if (output.value) {
-        output.classList.add('has-content');
-    } else {
-        output.classList.remove('has-content');
+function showResultCard(show) {
+    const container = document.querySelector('.dynamic-card-container');
+    if (container) {
+        container.classList.toggle('show-result', show);
     }
+}
 
-    showToast('تم تبديل محتوى مربعي النص', 'info');
+function swapDynamicCards() {
+    const container = document.querySelector('.dynamic-card-container');
+    if (container) {
+        const isResultVisible = container.classList.contains('show-result');
+        showResultCard(!isResultVisible);
+        showToast(isResultVisible ? 'تم عرض بطاقة الإيموجي' : 'تم عرض بطاقة النتيجة', 'info');
+    }
 }
 
 function showToast(message, type = 'success', duration = 3000) {
@@ -847,17 +840,6 @@ function updateStats(originalSize, compressedSize, textLength) {
         if (compressedSizeEl) {
             compressedSizeEl.textContent += ` (${ratio}% توفير)`;
         }
-    }
-}
-
-function showResultsSection() {
-    const resultsSection = $('resultsSection');
-    if (resultsSection) {
-        resultsSection.classList.add('visible');
-
-        setTimeout(() => {
-            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
     }
 }
 
@@ -1466,7 +1448,7 @@ function setupEventListeners() {
     if (encodeBtn) encodeBtn.addEventListener('click', encodeText);
     if (decodeBtn) decodeBtn.addEventListener('click', decodeText);
     if (decodeMultipleBtn) decodeMultipleBtn.addEventListener('click', decodeMultipleText);
-    if (swapBtn) swapBtn.addEventListener('click', swapIO);
+    if (swapBtn) swapBtn.addEventListener('click', swapDynamicCards);
 
     // Input action buttons
     const deleteBtn = $('deleteBtn');
@@ -1834,6 +1816,7 @@ function clearInput() {
     if (inputText) {
         inputText.value = '';
         updateCharCount();
+        showResultCard(false); // Hide result card and show emoji card
         showToast('تم مسح حقل الإدخال', 'info');
     }
 }
