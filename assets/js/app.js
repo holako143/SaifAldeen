@@ -404,8 +404,6 @@ async function encodeText() {
             showToast('تم تشفير النص بنجاح', 'success');
         }
 
-        showResultsSection();
-
     } catch (error) {
         console.error('Encoding error:', error);
         showToast('حدث خطأ أثناء التشفير: ' + error.message, 'error');
@@ -558,7 +556,6 @@ async function decodeText() {
             showToast(`تم فك تشفير النص بنجاح`, 'success');
         }
 
-        showResultsSection();
     }
 }
 
@@ -617,7 +614,6 @@ async function decodeMultipleText() {
         output.classList.add('has-content');
         updateStats(totalOriginalSize, totalCompressedSize, output.value.length);
         showToast(`تم فك تشفير ${decodedCount} رسالة بنجاح.`, 'success');
-        showResultsSection();
     } else {
         showToast('تم البحث ولكن لم يتم العثور على رسائل مشفرة صالحة.', 'warning');
     }
@@ -842,16 +838,6 @@ function updateStats(originalSize, compressedSize, textLength) {
     }
 }
 
-function showResultsSection() {
-    const resultsSection = $('resultsSection');
-    if (resultsSection) {
-        resultsSection.style.display = 'block';
-
-        setTimeout(() => {
-            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
-    }
-}
 
 async function copyToClipboard(text = null) {
     const output = $('output');
@@ -1842,19 +1828,27 @@ async function pasteFromClipboard() {
     const inputText = $('inputText');
     if (!inputText) return;
 
+    // The modern Clipboard API requires a secure context (HTTPS) and user activation (a click).
     if (!navigator.clipboard || !navigator.clipboard.readText) {
-        showToast('متصفحك لا يدعم لصق النص تلقائياً.', 'warning');
+        showToast('متصفحك لا يدعم لصق النص تلقائياً أو أن الصفحة ليست آمنة (HTTPS).', 'warning');
         return;
     }
 
     try {
         const text = await navigator.clipboard.readText();
-        inputText.value += text;
+        inputText.value = text; // Replace content as requested
         updateCharCount();
-        showToast('تم لصق النص من الحافظة', 'success');
+        showToast('تم لصق النص من الحافظة بنجاح', 'success');
     } catch (err) {
-        console.error('Failed to read clipboard contents: ', err);
-        showToast('فشل في قراءة الحافظة. يرجى منح الإذن.', 'error');
+        console.error('Clipboard read failed:', err);
+        // Provide specific feedback based on the error.
+        if (err.name === 'NotAllowedError') {
+            // This is a common error if the user denies the permission prompt.
+            showToast('فشل اللصق. يرجى منح إذن الوصول إلى الحافظة عند طلبه.', 'error');
+        } else {
+            // For other errors, show a generic message.
+            showToast('فشل في قراءة الحافظة. قد تكون المشكلة في المتصفح أو الإعدادات.', 'error');
+        }
     }
 }
 

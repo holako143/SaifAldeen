@@ -312,10 +312,6 @@ body {
     border-color: rgba(71, 85, 105, 0.5);
 }
 
-#resultsSection {
-    display: none;
-}
-
 .advanced-options h3 {
     margin-bottom: 1rem;
     font-weight: 600;
@@ -1073,10 +1069,14 @@ body.sidebar-open {
 }
 
 .action-btn {
-    width: 60px;
-    height: 60px;
-    font-size: 1.5rem;
+    width: 65px;
+    height: 65px;
+    font-size: 1.75rem;
     border-radius: 50%;
+}
+
+.action-btn:hover {
+    box-shadow: 0 0 20px var(--primary-dark);
 }
 
 @media (max-width: 480px) {
