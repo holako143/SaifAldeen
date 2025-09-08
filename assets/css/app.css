@@ -75,6 +75,8 @@
 .fa-grip-vertical::before { content: "\f58d"; }
 .fa-search-plus::before { content: "\f00e"; }
 .fa-font::before { content: "\f031"; }
+.fa-plus::before { content: "\f067"; }
+.fa-layer-group::before { content: "\f5fd"; }
 
 /* ========== CSS Variables ========== */
 :root {
@@ -513,7 +515,7 @@ label {
     border-radius: var(--radius-lg);
     border: 1px solid rgba(226, 232, 240, 0.5);
     margin: 1rem 0;
-    height: 130px;
+    height: 125px;
     overflow: auto;
     cursor: grab;
     padding: 0;
