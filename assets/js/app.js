@@ -386,7 +386,9 @@ async function encodeText() {
         output.classList.add('has-content');
         autoGrowTextarea(output);
 
-        updateStats(header.originalSize, header.compressedSize, text.length);
+        setTimeout(() => {
+            updateStats(header.originalSize, header.compressedSize, text.length);
+        }, 0);
         addToHistory(text, result, 'encode');
 
         if (appSettings.autoCopyEncodedEmoji) {
@@ -536,7 +538,9 @@ async function decodeText() {
         output.classList.add('has-content');
         autoGrowTextarea(output);
 
-        updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
+        setTimeout(() => {
+            updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
+        }, 0);
 
         if (appSettings.autoCopyDecodedText) {
             await copyToClipboard(result.text);
@@ -603,7 +607,9 @@ async function decodeMultipleText() {
         output.value = `--- تم العثور على ${decodedCount} رسالة ---\n\n` + decodedOutputs.join('\n\n----------\n\n');
         output.classList.add('has-content');
         autoGrowTextarea(output);
-        updateStats(totalOriginalSize, totalCompressedSize, output.value.length);
+        setTimeout(() => {
+            updateStats(totalOriginalSize, totalCompressedSize, output.value.length);
+        }, 0);
         showToast(`تم فك تشفير ${decodedCount} رسالة بنجاح.`, 'success');
         showResultCard(true);
     } else {

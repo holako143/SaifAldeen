@@ -980,7 +980,7 @@ body.sidebar-open {
 /* ========== Responsive Design ========== */
 @media (max-width: 768px) {
     .container {
-        padding: 1rem;
+        padding: 0.5rem;
         margin-top: 80px;
     }
     
@@ -1181,8 +1181,11 @@ body.sidebar-open {
 
 /* ========== Card-Based Cipher Layout ========== */
 
-.cipher-card {
+.textarea-wrapper {
     position: relative;
+}
+
+.cipher-card {
     border: 1px solid rgba(226, 232, 240, 0.5);
     border-radius: var(--radius-lg);
     padding: 1.5rem;
@@ -1212,7 +1215,7 @@ body.sidebar-open {
 .cipher-card textarea {
     min-height: 180px;
     resize: vertical; /* Allow manual resize as well */
-    padding-right: 55px; /* Make space for buttons on the right */
+    padding-right: 60px; /* Make space for buttons on the right */
 }
 
 .action-buttons-container {
