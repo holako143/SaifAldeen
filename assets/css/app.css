@@ -1041,7 +1041,8 @@ body.sidebar-open {
 
 .input-actions, .output-actions {
     position: absolute;
-    top: 15px;
+    top: 50%;
+    transform: translateY(-50%);
     left: 15px; /* For RTL layout */
     display: flex;
     flex-direction: column;
@@ -1076,6 +1077,13 @@ body.sidebar-open {
     height: 60px;
     font-size: 1.5rem;
     border-radius: 50%;
+}
+
+@media (max-width: 480px) {
+    .custom-char-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 .input-actions .icon-btn:hover,
