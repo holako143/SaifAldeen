@@ -881,7 +881,7 @@ async function copyToClipboard(text = null) {
         }
     } catch (error) {
         console.error('Copy failed:', error);
-        showToast('فشل في نسخ النص', 'error');
+        showToast(`فشل في نسخ النص: ${error.message}`, 'error');
     }
 }
 
@@ -1852,16 +1852,20 @@ async function pasteFromClipboard() {
         const text = await navigator.clipboard.readText();
         const { selectionStart, selectionEnd } = inputText;
 
-        document.execCommand("insertText", false, text);
+        inputText.value =
+            inputText.value.substring(0, selectionStart) +
+            text +
+            inputText.value.substring(selectionEnd);
 
-        // Manually trigger an 'input' event to update char count and other listeners
+        inputText.selectionStart = inputText.selectionEnd = selectionStart + text.length;
+
         inputText.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
 
         showToast('تم لصق النص من الحافظة', 'success');
         inputText.focus();
     } catch (err) {
         console.error('Failed to read clipboard contents: ', err);
-        showToast('فشل في قراءة الحافظة. يرجى منح الإذن.', 'error');
+        showToast(`فشل في قراءة الحافظة: ${err.message}`, 'error');
     }
 }
 
