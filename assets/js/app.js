@@ -493,6 +493,12 @@ async function decodeSingleMessage(src, { showToasts = true } = {}) {
             finalText = decoder.decode(payloadBytes);
         }
 
+        // Verify CRC32 checksum for data integrity
+        if (header.crc32 && !AdvancedCRC.verify(finalText, header.crc32)) {
+            if (showToasts) showToast('فشل التحقق من سلامة البيانات (CRC check failed). قد تكون البيانات تالفة.', 'error');
+            return null; // Return null if CRC check fails
+        }
+
         return {
             text: finalText,
             stats: {

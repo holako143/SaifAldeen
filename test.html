@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Compression Test</title>
+    <title>Emoji Cipher Pro Test Suite</title>
 </head>
 <body>
-    <h1>Testing AdvancedCompression</h1>
+    <h1>Testing Emoji Cipher Pro</h1>
     <p>Check the console for test results.</p>
 
     <script>
-        console.log("Starting compression tests...");
-
         // Helper to compare two Uint8Arrays
         function arraysAreEqual(a, b) {
+            if (!a || !b) return false;
             if (a.length !== b.length) return false;
             for (let i = 0; i < a.length; i++) {
                 if (a[i] !== b[i]) return false;
@@ -19,29 +18,97 @@
             return true;
         }
 
-        // --- Original Buggy AdvancedCompression Class ---
-        class BuggyAdvancedCompression {
+        // ==================================================================
+        // Mocks and code copied from app.js for testing environment
+        // ==================================================================
+
+        const $ = () => ({ value: '' }); // Mock for document.getElementById
+        const showToast = (message, type) => { // Mock for showToast
+            console.log(`[TOAST] ${type}: ${message}`);
+        };
+
+        function bytesToBase64(bytes) {
+            const binString = String.fromCodePoint(...bytes);
+            return btoa(binString);
+        }
+
+        function base64ToBytes(base64) {
+            const binString = atob(base64);
+            return Uint8Array.from(binString, m => m.codePointAt(0));
+        }
+
+        const HEADER_MARKER = '\u061C';
+        const SEPARATOR = '\u034F';
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true });
+
+        const VARIATION_SELECTOR_START = 0xfe00;
+        const VARIATION_SELECTOR_END = 0xfe0f;
+        const VARIATION_SELECTOR_SUPPLEMENT_START = 0xe0100;
+        const VARIATION_SELECTOR_SUPPLEMENT_END = 0xe01ef;
+
+        function toVariationSelector(byte) {
+            if (byte >= 0 && byte < 16) return String.fromCodePoint(VARIATION_SELECTOR_START + byte);
+            if (byte >= 16 && byte < 256) return String.fromCodePoint(VARIATION_SELECTOR_SUPPLEMENT_START + byte - 16);
+            return null;
+        }
+
+        function fromVariationSelector(codePoint) {
+            if (codePoint >= VARIATION_SELECTOR_START && codePoint <= VARIATION_SELECTOR_END) return codePoint - VARIATION_SELECTOR_START;
+            if (codePoint >= VARIATION_SELECTOR_SUPPLEMENT_START && codePoint <= VARIATION_SELECTOR_SUPPLEMENT_END) return codePoint - VARIATION_SELECTOR_SUPPLEMENT_START + 16;
+            return null;
+        }
+
+        function encode(emoji, bytes) {
+            let encoded = emoji;
+            for (const byte of bytes) {
+                encoded += toVariationSelector(byte);
+            }
+            return encoded;
+        }
+
+        function decode(text) {
+            let decoded = [];
+            const chars = Array.from(text);
+            let startIndex = 0;
+            for (let i = 0; i < chars.length; i++) {
+                if (fromVariationSelector(chars[i].codePointAt(0)) === null) {
+                    startIndex = i + 1;
+                    break;
+                }
+            }
+            for (let i = startIndex; i < chars.length; i++) {
+                const byte = fromVariationSelector(chars[i].codePointAt(0));
+                if (byte !== null) decoded.push(byte);
+                else break;
+            }
+            return new Uint8Array(decoded);
+        }
+
+        class AdvancedCompression {
+            static compress(text) {
+                if (!text || text.length === 0) return new Uint8Array([]);
+                const textBytes = encoder.encode(text);
+                return this.simpleCompress(textBytes);
+            }
+            static decompress(data) {
+                if (!data || data.length === 0) return '';
+                const decompressed = this.simpleDecompress(data);
+                return decoder.decode(decompressed);
+            }
             static simpleCompress(data) {
                 const result = [];
                 let i = 0;
                 while (i < data.length) {
                     const current = data[i];
                     let count = 1;
-                    while (i + count < data.length && data[i + count] === current && count < 255) {
-                        count++;
-                    }
-                    if (count > 3) {
-                        result.push(255, count, current);
-                    } else {
-                        for (let j = 0; j < count; j++) {
-                            result.push(current);
-                        }
-                    }
+                    while (i + count < data.length && data[i + count] === current && count < 255) count++;
+                    if (count > 3 || current === 255) result.push(255, count, current);
+                    else for (let j = 0; j < count; j++) result.push(current);
                     i += count;
                 }
                 return new Uint8Array(result);
             }
-
             static simpleDecompress(data) {
                 const result = [];
                 let i = 0;
@@ -49,9 +116,7 @@
                     if (data[i] === 255 && i + 2 < data.length) {
                         const count = data[i + 1];
                         const value = data[i + 2];
-                        for (let j = 0; j < count; j++) {
-                            result.push(value);
-                        }
+                        for (let j = 0; j < count; j++) result.push(value);
                         i += 3;
                     } else {
                         result.push(data[i]);
@@ -62,115 +127,181 @@
             }
         }
 
-        // --- Fixed AdvancedCompression Class ---
-        class FixedAdvancedCompression {
-            static simpleCompress(data) {
-                const result = [];
-                let i = 0;
-                while (i < data.length) {
-                    const current = data[i];
-                    let count = 1;
-                    while (i + count < data.length && data[i + count] === current && count < 255) {
-                        count++;
+        class AdvancedCRC {
+            static crc32Table = (() => {
+                const table = new Uint32Array(256);
+                for (let i = 0; i < 256; i++) {
+                    let c = i;
+                    for (let j = 0; j < 8; j++) {
+                        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
                     }
-                    if (count > 3 || current === 255) {
-                        result.push(255, count, current);
-                    } else {
-                        for (let j = 0; j < count; j++) {
-                            result.push(current);
-                        }
-                    }
-                    i += count;
+                    table[i] = c;
                 }
-                return new Uint8Array(result);
+                return table;
+            })();
+            static calculate(str) {
+                const bytes = encoder.encode(str);
+                let crc = 0 ^ (-1);
+                for (let i = 0; i < bytes.length; i++) {
+                    crc = (crc >>> 8) ^ this.crc32Table[(crc ^ bytes[i]) & 0xFF];
+                }
+                return (crc ^ (-1)) >>> 0;
             }
-
-            static simpleDecompress(data) {
-                const result = [];
-                let i = 0;
-                while (i < data.length) {
-                    if (data[i] === 255 && i + 2 < data.length) {
-                        const count = data[i + 1];
-                        const value = data[i + 2];
-                        for (let j = 0; j < count; j++) {
-                            result.push(value);
-                        }
-                        i += 3;
-                    } else {
-                        result.push(data[i]);
-                        i++;
-                    }
-                }
-                return new Uint8Array(result);
+            static verify(str, expectedCrc) {
+                return this.calculate(str) === expectedCrc;
             }
         }
 
-        // --- Test Cases ---
-        const testDataWith255 = new Uint8Array([10, 20, 255, 30, 40]);
-        const testDataLongRun = new Uint8Array([5, 5, 5, 5, 5, 6, 7]);
-        const testDataWith255Run = new Uint8Array([1, 255, 255, 255, 2]);
-
-        // --- Running Tests ---
-
-        // Test 1: Verify the bug with the original code
-        console.log("--- Test 1: Buggy Version ---");
-        const buggyCompressed = BuggyAdvancedCompression.simpleCompress(testDataWith255);
-        const buggyDecompressed = BuggyAdvancedCompression.simpleDecompress(buggyCompressed);
-        const isBuggyCorrect = arraysAreEqual(testDataWith255, buggyDecompressed);
-        console.log("Original Data: ", testDataWith255);
-        console.log("Compressed by Buggy: ", buggyCompressed);
-        console.log("Decompressed by Buggy: ", buggyDecompressed);
-        console.assert(!isBuggyCorrect, "BUG VERIFIED: The decompressed data does NOT match the original.");
-        if (!isBuggyCorrect) {
-            console.log("%cSUCCESS: Bug is reproduced as expected.", "color: red;");
-        } else {
-            console.error("FAILURE: Bug could not be reproduced.");
+        // This is the function from app.js that contains the bug (missing CRC check)
+        async function decodeSingleMessage_BUGGY(src, { showToasts = true } = {}) {
+            try {
+                const combinedData = decode(src);
+                if (combinedData.length === 0) { return null; }
+                const markerBytes = encoder.encode(HEADER_MARKER);
+                const separatorBytes = encoder.encode(SEPARATOR);
+                let headerStart = -1;
+                for (let j = 0; j <= combinedData.length - markerBytes.length; j++) {
+                    let matchFound = true;
+                    for (let k = 0; k < markerBytes.length; k++) { if (combinedData[j + k] !== markerBytes[k]) { matchFound = false; break; } }
+                    if (matchFound) { headerStart = j + markerBytes.length; break; }
+                }
+                if (headerStart === -1) { return null; }
+                let separatorStart = -1;
+                for (let j = headerStart; j <= combinedData.length - separatorBytes.length; j++) {
+                    let matchFound = true;
+                    for (let k = 0; k < separatorBytes.length; k++) { if (combinedData[j + k] !== separatorBytes[k]) { matchFound = false; break; } }
+                    if (matchFound) { separatorStart = j; break; }
+                }
+                if (separatorStart === -1) { return null; }
+                const headerBytes = combinedData.slice(headerStart, separatorStart);
+                let payloadBytes = combinedData.slice(separatorStart + separatorBytes.length);
+                const headerText = decoder.decode(headerBytes);
+                let header;
+                try { header = JSON.parse(headerText); } catch (e) { return null; }
+                if (header.encryption) { throw new Error("Encryption not supported in this test environment"); }
+                let finalText;
+                if (header.compression) { finalText = AdvancedCompression.decompress(payloadBytes); }
+                else { finalText = decoder.decode(payloadBytes); }
+                return { text: finalText, stats: { originalSize: header.originalSize, compressedSize: header.compressedSize } };
+            } catch (error) { return null; }
         }
 
+        // This is the FIXED function with the CRC check
+        async function decodeSingleMessage_FIXED(src, { showToasts = true } = {}) {
+            try {
+                const combinedData = decode(src);
+                if (combinedData.length === 0) { if (showToasts) showToast('لم يتم العثور على بيانات مشفرة صالحة', 'error'); return null; }
+                const markerBytes = encoder.encode(HEADER_MARKER);
+                const separatorBytes = encoder.encode(SEPARATOR);
+                let headerStart = -1;
+                for (let j = 0; j <= combinedData.length - markerBytes.length; j++) {
+                    let matchFound = true;
+                    for (let k = 0; k < markerBytes.length; k++) { if (combinedData[j + k] !== markerBytes[k]) { matchFound = false; break; } }
+                    if (matchFound) { headerStart = j + markerBytes.length; break; }
+                }
+                if (headerStart === -1) { if (showToasts) showToast('فشل في العثور على بداية البيانات الوصفية.', 'error'); return null; }
+                let separatorStart = -1;
+                for (let j = headerStart; j <= combinedData.length - separatorBytes.length; j++) {
+                    let matchFound = true;
+                    for (let k = 0; k < separatorBytes.length; k++) { if (combinedData[j + k] !== separatorBytes[k]) { matchFound = false; break; } }
+                    if (matchFound) { separatorStart = j; break; }
+                }
+                if (separatorStart === -1) { if (showToasts) showToast('فشل في العثور على الفاصل بين البيانات الوصفية والمحتوى.', 'error'); return null; }
+                const headerBytes = combinedData.slice(headerStart, separatorStart);
+                let payloadBytes = combinedData.slice(separatorStart + separatorBytes.length);
+                const headerText = decoder.decode(headerBytes);
+                let header;
+                try { header = JSON.parse(headerText); } catch (e) { if (showToasts) showToast('البيانات الوصفية غير صالحة أو تالفة.', 'error'); return null; }
+                if (header.encryption) { throw new Error("Encryption not supported"); }
+                let finalText;
+                if (header.compression) { finalText = AdvancedCompression.decompress(payloadBytes); }
+                else { finalText = decoder.decode(payloadBytes); }
 
-        // Test 2: Verify the fix with the new code
-        console.log("\n--- Test 2: Fixed Version ---");
-        const fixedCompressed = FixedAdvancedCompression.simpleCompress(testDataWith255);
-        const fixedDecompressed = FixedAdvancedCompression.simpleDecompress(fixedCompressed);
-        const isFixedCorrect = arraysAreEqual(testDataWith255, fixedDecompressed);
-        console.log("Original Data: ", testDataWith255);
-        console.log("Compressed by Fixed: ", fixedCompressed);
-        console.log("Decompressed by Fixed: ", fixedDecompressed);
-        console.assert(isFixedCorrect, "FIX VERIFICATION FAILED: The decompressed data does not match the original.");
-        if (isFixedCorrect) {
-            console.log("%cSUCCESS: Fix is verified. Data is correctly handled.", "color: green;");
-        } else {
-             console.error("FAILURE: Fix is not working.");
+                // FIX: Verify CRC32 checksum for data integrity
+                if (header.crc32 && !AdvancedCRC.verify(finalText, header.crc32)) {
+                    if (showToasts) showToast('فشل التحقق من سلامة البيانات (CRC check failed). قد تكون البيانات تالفة.', 'error');
+                    return null; // Return null if CRC check fails
+                }
+
+                return { text: finalText, stats: { originalSize: header.originalSize, compressedSize: header.compressedSize } };
+            } catch (error) {
+                if (showToasts) showToast('حدث خطأ أثناء فك التشفير: ' + error.message, 'error');
+                return null;
+            }
         }
 
-        // Test 3: Verify long run compression still works
-        console.log("\n--- Test 3: Long Run Sanity Check ---");
-        const fixedCompressedRun = FixedAdvancedCompression.simpleCompress(testDataLongRun);
-        const fixedDecompressedRun = FixedAdvancedCompression.simpleDecompress(fixedCompressedRun);
-        const isRunCorrect = arraysAreEqual(testDataLongRun, fixedDecompressedRun);
-        console.log("Original Data: ", testDataLongRun);
-        console.log("Decompressed by Fixed: ", fixedDecompressedRun);
-        console.assert(isRunCorrect, "SANITY CHECK FAILED: Long run compression is broken.");
-         if (isRunCorrect) {
-            console.log("%cSUCCESS: Long run compression is still working correctly.", "color: green;");
-        } else {
-             console.error("FAILURE: Long run compression is broken.");
+        // ==================================================================
+        // Test Suite
+        // ==================================================================
+
+        console.log("--- Starting Test Suite ---");
+
+        async function runTestSuite() {
+            // 1. Define test data
+            const originalText = "This is a test of the CRC-32 verification.";
+            const testEmoji = '🧪';
+
+            // 2. Manually encode the text
+            const payloadBytes = AdvancedCompression.compress(originalText);
+            const crc32 = AdvancedCRC.calculate(originalText);
+            const header = { version: 2, compression: 1, encryption: 0, crc32: crc32, originalSize: encoder.encode(originalText).length };
+            const headerBytes = encoder.encode(JSON.stringify(header));
+            const markerBytes = encoder.encode(HEADER_MARKER);
+            const separatorBytes = encoder.encode(SEPARATOR);
+            const combinedData = new Uint8Array(markerBytes.length + headerBytes.length + separatorBytes.length + payloadBytes.length);
+            let offset = 0;
+            combinedData.set(markerBytes, offset);
+            offset += markerBytes.length;
+            combinedData.set(headerBytes, offset);
+            offset += headerBytes.length;
+            combinedData.set(separatorBytes, offset);
+            offset += separatorBytes.length;
+            combinedData.set(payloadBytes, offset);
+
+            // 3. Create a corrupted version
+            const corruptedData = new Uint8Array(combinedData);
+            corruptedData[corruptedData.length - 1] = corruptedData[corruptedData.length - 1] ^ 0xFF; // Flip a bit
+            const corruptedMessage = encode(testEmoji, corruptedData);
+
+            // --- Test 1: Bug Verification ---
+            console.log("\n--- Test 1: CRC Bug Verification ---");
+            const buggyResult = await decodeSingleMessage_BUGGY(corruptedMessage, { showToasts: false });
+            const corruptedPayloadBytes = corruptedData.slice(combinedData.length - payloadBytes.length);
+            const expectedCorruptedText = AdvancedCompression.decompress(corruptedPayloadBytes);
+            console.log("Result from Buggy Function: ", buggyResult ? buggyResult.text : null);
+            console.assert(buggyResult && buggyResult.text === expectedCorruptedText && buggyResult.text !== originalText, "BUG VERIFICATION FAILED: Function should have returned corrupted text.");
+            if (buggyResult && buggyResult.text === expectedCorruptedText && buggyResult.text !== originalText) {
+                console.log("%cSUCCESS: Bug is reproduced. The function incorrectly decodes corrupted data.", "color: red;");
+            } else {
+                console.error("FAILURE: Bug could not be reproduced.");
+            }
+
+            // --- Test 2: Fix Verification ---
+            console.log("\n--- Test 2: CRC Fix Verification ---");
+            const fixedResult = await decodeSingleMessage_FIXED(corruptedMessage, { showToasts: false });
+            console.log("Result from Fixed Function: ", fixedResult);
+            console.assert(fixedResult === null, "FIX VERIFICATION FAILED: Function should have returned null for corrupted data.");
+            if (fixedResult === null) {
+                console.log("%cSUCCESS: Fix is verified. The function correctly returned null for corrupted data.", "color: green;");
+            } else {
+                console.error("FAILURE: Fix is not working.");
+            }
+
+            // --- Test 3: Sanity Check (non-corrupted data) ---
+            console.log("\n--- Test 3: Sanity Check with Valid Data ---");
+            const validMessage = encode(testEmoji, combinedData);
+            const sanityResult = await decodeSingleMessage_FIXED(validMessage, { showToasts: false });
+            console.log("Result from Fixed Function (Valid): ", sanityResult ? sanityResult.text : null);
+            console.assert(sanityResult && sanityResult.text === originalText, "SANITY CHECK FAILED: Function failed to decode a valid message.");
+            if (sanityResult && sanityResult.text === originalText) {
+                console.log("%cSUCCESS: Sanity check passed. The function correctly decodes valid data.", "color: green;");
+            } else {
+                console.error("FAILURE: Sanity check failed.");
+            }
         }
 
-        // Test 4: Verify run of 255 bytes
-        console.log("\n--- Test 4: Run of 255 bytes ---");
-        const fixedCompressed255Run = FixedAdvancedCompression.simpleCompress(testDataWith255Run);
-        const fixedDecompressed255Run = FixedAdvancedCompression.simpleDecompress(fixedCompressed255Run);
-        const is255RunCorrect = arraysAreEqual(testDataWith255Run, fixedDecompressed255Run);
-        console.log("Original Data: ", testDataWith255Run);
-        console.log("Compressed by Fixed: ", fixedCompressed255Run);
-        console.log("Decompressed by Fixed: ", fixedDecompressed255Run);
-        console.assert(is255RunCorrect, "255-RUN TEST FAILED: A run of 255 bytes is not handled correctly.");
-         if (is255RunCorrect) {
-            console.log("%cSUCCESS: A run of 255 bytes is correctly handled.", "color: green;");
-        } else {
-             console.error("FAILURE: A run of 255 bytes is not handled correctly.");
-        }
+        // Run all tests
+        runTestSuite();
 
     </script>
 </body>
