@@ -1034,6 +1034,20 @@ body.sidebar-open {
     box-shadow: none;
 }
 
+.action-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.action-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+    border-radius: 50%;
+}
+
 .input-actions .icon-btn:hover,
 .output-actions .icon-btn:hover {
     color: white;
