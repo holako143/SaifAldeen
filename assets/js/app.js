@@ -11,6 +11,14 @@ const defaultEmojis = [
     '⚙️', '⚗️', '🔭', '🔬', '📡', '🛡️', '⚔️', '💣', '🔫', '💊', '💉', '🌡️', '⚖️', '🔗', '⛓️'
 ];
 
+const alternateChars = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+    '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '=', '+', '[', ']', '{', '}', '|', ';', ':', ',', '.', '<', '>', '/', '?'
+];
+
+
 // ========== Helper Functions ==========
 // Helper functions for robust Base64 encoding/decoding to handle binary data correctly
 function bytesToBase64(bytes) {
@@ -35,7 +43,8 @@ let appSettings = {
     autoCopyEncodedEmoji: true, // تفعيل النسخ التلقائي
     autoCopyDecodedText: true,
     encryptionStrength: 'high',
-    compressionLevel: 'auto'
+    compressionLevel: 'auto',
+    useAlternateChars: false
 };
 
 // Application Data
@@ -871,34 +880,38 @@ async function copyToClipboard(text = null) {
     }
 }
 
-// ========== Emoji Management ==========
+// ========== Character Set Management ==========
 
-function renderEmojis() {
-    const emojiSlider = $('emojiSlider');
-    if (!emojiSlider) return;
+function renderCharacterList() {
+    const slider = $('emojiSlider');
+    if (!slider) return;
 
-    emojiSlider.innerHTML = '';
-    emojiList.forEach((emoji) => {
-        const emojiEl = document.createElement('div');
-        emojiEl.className = 'emoji-item';
-        emojiEl.textContent = emoji;
-        emojiEl.title = `استخدام ${emoji} كحاوية للتشفير`;
+    const list = appSettings.useAlternateChars ? alternateChars : emojiList;
 
-        if (emoji === currentActiveEmoji) {
-            emojiEl.classList.add('active');
+    slider.innerHTML = '';
+    list.forEach((char) => {
+        const charEl = document.createElement('div');
+        charEl.className = 'emoji-item';
+        charEl.textContent = char;
+        charEl.title = `استخدام ${char} كحاوية للتشفير`;
+
+        if (char === currentActiveEmoji) {
+            charEl.classList.add('active');
         }
 
-        emojiEl.addEventListener('click', () => setActiveEmoji(emoji));
-        emojiSlider.appendChild(emojiEl);
+        charEl.addEventListener('click', () => setActiveChar(char));
+        slider.appendChild(charEl);
     });
 
-    renderCustomEmojiList();
+    if (!appSettings.useAlternateChars) {
+        renderCustomEmojiList();
+    }
 }
 
-function setActiveEmoji(emoji) {
-    currentActiveEmoji = emoji;
+function setActiveChar(char) {
+    currentActiveEmoji = char;
     document.querySelectorAll('.emoji-item').forEach(el => {
-        el.classList.toggle('active', el.textContent === emoji);
+        el.classList.toggle('active', el.textContent === char);
     });
 }
 
@@ -916,8 +929,8 @@ function addNewEmoji(emoji) {
     }
 
     emojiList.unshift(emoji);
-    setActiveEmoji(emoji);
-    renderEmojis();
+    setActiveChar(emoji);
+    renderCharacterList();
     saveEmojis();
     showToast('تم إضافة الإيموجي بنجاح');
 
@@ -936,10 +949,10 @@ function removeEmoji(emoji) {
     emojiList = emojiList.filter(e => e !== emoji);
 
     if (currentActiveEmoji === emoji) {
-        setActiveEmoji(emojiList[0]);
+        setActiveChar(emojiList[0]);
     }
 
-    renderEmojis();
+    renderCharacterList();
     saveEmojis();
     showToast('تم حذف الإيموجي بنجاح');
 }
@@ -984,8 +997,8 @@ function renderCustomEmojiList() {
 function resetEmojiList() {
     if (confirm('هل أنت متأكد من رغبتك في إعادة تعيين قائمة الإيموجي؟')) {
         emojiList = [...defaultEmojis];
-        setActiveEmoji(defaultEmojis[0]);
-        renderEmojis();
+        setActiveChar(defaultEmojis[0]);
+        renderCharacterList();
         saveEmojis();
         showToast('تم إعادة تعيين قائمة الإيموجي');
     }
@@ -1335,7 +1348,7 @@ function setupDragAndDrop() {
             emojiList.splice(dropIndex, 0, removed);
 
             saveEmojis();
-            renderEmojis();
+            renderCharacterList();
             showToast('تم تحديث ترتيب الإيموجي', 'success');
         }
         return false;
@@ -1716,6 +1729,18 @@ function setupEventListeners() {
             }
         }
     });
+
+    // Character set toggle
+    const charSetToggle = $('charSetToggle');
+    if (charSetToggle) {
+        charSetToggle.addEventListener('change', (e) => {
+            appSettings.useAlternateChars = e.target.checked;
+            const list = appSettings.useAlternateChars ? alternateChars : emojiList;
+            setActiveChar(list[0]);
+            renderCharacterList();
+            saveSettings();
+        });
+    }
 }
 
 // ========== Additional Functions ==========
@@ -1867,7 +1892,7 @@ async function initApp() {
 
         applySettings();
 
-        renderEmojis();
+        renderCharacterList();
         renderHistory();
         updateCharCount();
 

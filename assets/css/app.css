@@ -73,6 +73,8 @@
 .fa-paste::before { content: "\f0ea"; }
 .fa-share-alt::before { content: "\f1e0"; }
 .fa-grip-vertical::before { content: "\f58d"; }
+.fa-search-plus::before { content: "\f00e"; }
+.fa-font::before { content: "\f031"; }
 
 /* ========== CSS Variables ========== */
 :root {
@@ -1014,6 +1016,27 @@ body.sidebar-open {
     min-height: 120px;
 }
 
+.input-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-gray);
+}
+
+.meta-item-center {
+    display: flex;
+    justify-content: center;
+}
+
+.switch-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
 .input-actions, .output-actions {
     position: absolute;
     top: 15px;
@@ -1034,11 +1057,16 @@ body.sidebar-open {
     box-shadow: none;
 }
 
+.custom-char-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    align-items: center;
+}
+
 .action-buttons-container {
     display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 0.5rem;
 }
 
 .action-btn {

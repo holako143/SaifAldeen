@@ -174,11 +174,21 @@
                     <textarea id="inputText" placeholder="أدخل النص هنا..." style="width: 100%; min-height: 180px; margin-bottom: 0.75rem; margin-top: 0.5rem;"></textarea>
                 </div>
                 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <div style="font-size: 0.875rem; color: #64748b;">
+                <div class="input-meta">
+                    <div class="meta-item">
                         <span id="charCount">0</span> حرف
                     </div>
-                    <div style="font-size: 0.875rem; color: #64748b;">
+                    <div class="meta-item-center">
+                        <label for="charSetToggle" class="switch-label">
+                            <i class="fas fa-smile"></i>
+                            <label class="switch">
+                                <input type="checkbox" id="charSetToggle">
+                                <span class="slider"></span>
+                            </label>
+                            <i class="fas fa-font"></i>
+                        </label>
+                    </div>
+                    <div class="meta-item">
                         <span id="sizeEstimate">~0 بايت</span> مضغوط
                     </div>
                 </div>
@@ -201,23 +211,21 @@
                     </button>
                 </div>
                 
-                <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                <div class="custom-char-container">
                     <input id="customChar" placeholder="أو اكتب رمز مخصص" style="flex: 1;"/>
                     <button id="addCustomEmoji" class="btn-secondary">إضافة</button>
+                    <div class="action-buttons-container">
+                        <button id="encodeBtn" class="icon-btn action-btn btn-primary" title="تشفير النص">
+                            <i class="fas fa-lock"></i>
+                        </button>
+                        <button id="decodeBtn" class="icon-btn action-btn btn-secondary" title="فك التشفير">
+                            <i class="fas fa-unlock"></i>
+                        </button>
+                        <button id="decodeMultipleBtn" class="icon-btn action-btn btn-secondary" title="فك تشفير متعدد">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- Action Buttons -->
-            <div class="action-buttons-container">
-                <button id="encodeBtn" class="icon-btn action-btn btn-primary" title="تشفير النص">
-                    <i class="fas fa-lock"></i>
-                </button>
-                <button id="decodeBtn" class="icon-btn action-btn btn-secondary" title="فك التشفير">
-                    <i class="fas fa-unlock"></i>
-                </button>
-                <button id="decodeMultipleBtn" class="icon-btn action-btn btn-secondary" title="فك تشفير متعدد">
-                    <i class="fas fa-search-plus"></i>
-                </button>
             </div>
             
             <!-- Results Section -->
