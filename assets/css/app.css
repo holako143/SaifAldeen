@@ -1177,6 +1177,11 @@ body.sidebar-open {
     background: rgba(15, 23, 42, 0.95);
 }
 
+.cipher-card textarea {
+    min-height: 180px;
+    resize: vertical; /* Allow manual resize as well */
+}
+
 .action-buttons-container {
     justify-content: center; /* Center the icon buttons */
     margin-top: -0.5rem;

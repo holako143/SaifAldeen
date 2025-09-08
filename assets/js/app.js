@@ -384,6 +384,7 @@ async function encodeText() {
 
         output.value = result;
         output.classList.add('has-content');
+        autoGrowTextarea(output);
 
         updateStats(header.originalSize, header.compressedSize, text.length);
         addToHistory(text, result, 'encode');
@@ -533,6 +534,7 @@ async function decodeText() {
     if (result && result.text !== null) {
         output.value = result.text;
         output.classList.add('has-content');
+        autoGrowTextarea(output);
 
         updateStats(result.stats.originalSize, result.stats.compressedSize, result.text.length);
 
@@ -600,6 +602,7 @@ async function decodeMultipleText() {
     if (decodedCount > 0) {
         output.value = `--- تم العثور على ${decodedCount} رسالة ---\n\n` + decodedOutputs.join('\n\n----------\n\n');
         output.classList.add('has-content');
+        autoGrowTextarea(output);
         updateStats(totalOriginalSize, totalCompressedSize, output.value.length);
         showToast(`تم فك تشفير ${decodedCount} رسالة بنجاح.`, 'success');
         showResultCard(true);
@@ -758,6 +761,12 @@ function showShareModal(options, content) {
 }
 
 // ========== UI Functions ==========
+
+function autoGrowTextarea(element) {
+    if (!element) return;
+    element.style.height = 'auto';
+    element.style.height = (element.scrollHeight) + 'px';
+}
 
 function showResultCard(show) {
     const container = document.querySelector('.dynamic-card-container');
@@ -1460,7 +1469,10 @@ function setupEventListeners() {
     // Text input monitoring
     const inputText = $('inputText');
     if (inputText) {
-        inputText.addEventListener('input', updateCharCount);
+        inputText.addEventListener('input', () => {
+            updateCharCount();
+            autoGrowTextarea(inputText);
+        });
 
         // Custom paste handler to prevent browser sanitization of invisible characters
         inputText.addEventListener('paste', (event) => {
