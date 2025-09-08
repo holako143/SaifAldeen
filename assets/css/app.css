@@ -1002,16 +1002,12 @@ body.sidebar-open {
 }
 
 /* ========== Input Wrappers and Actions ========== */
-.input-wrapper, .output-wrapper {
+.textarea-wrapper {
     position: relative;
-    margin-top: 0.5rem;
 }
 
 #inputText, #output {
-    width: 100%;
-    min-height: 180px;
-    margin-bottom: 0.75rem;
-    padding-left: 65px; /* Make space for buttons */
+    padding-left: 55px; /* Make space for icons */
 }
 
 #output {
@@ -1021,7 +1017,7 @@ body.sidebar-open {
 .input-actions, .output-actions {
     position: absolute;
     top: 15px;
-    left: 15px;
+    left: 15px; /* For RTL layout */
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -1030,20 +1026,18 @@ body.sidebar-open {
 
 .input-actions .icon-btn,
 .output-actions .icon-btn {
-    background: transparent;
-    border: none;
-    width: auto;
-    height: auto;
-    font-size: 0.9rem;
-    padding: 0.5rem;
-    color: var(--text-gray);
+    background: rgba(241, 245, 249, 0.8);
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
     box-shadow: none;
 }
 
 .input-actions .icon-btn:hover,
 .output-actions .icon-btn:hover {
-    color: var(--primary);
-    background: rgba(102, 126, 234, 0.1);
+    color: white;
+    background: var(--primary);
 }
 
 /* ========== Modals ========== */
@@ -1177,42 +1171,6 @@ body.sidebar-open {
     background: linear-gradient(135deg, #64748b, #475569);
 }
 
-/* ========== Input Wrappers and Actions ========== */
-.input-wrapper, .output-wrapper {
-    position: relative;
-    margin-top: 0.5rem;
-}
-
-#inputText, #output {
-    width: 100%;
-    min-height: 180px;
-    margin-bottom: 0.75rem;
-    padding-left: 55px; /* Make space for buttons */
-}
-
-#output {
-    min-height: 120px;
-}
-
-.input-actions {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
-
-.output-actions {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    z-index: 2;
-}
 
 .icon-btn {
     background: rgba(241, 245, 249, 0.8);

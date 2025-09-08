@@ -26,10 +26,10 @@ function base64ToBytes(base64) {
 // Application Settings
 let appSettings = {
     theme: 'auto',
-    themeColor: 'default',
+    themeColor: 'sunset-glow',
     fontSize: '16px',
     fontFamily: 'system',
-    showNotifications: true,
+    showNotifications: false,
     autoSave: true,
     saveHistory: true,
     autoCopyEncodedEmoji: true, // تفعيل النسخ التلقائي
