@@ -107,6 +107,9 @@
 .theme-cyber-pink { --primary: #ec4899; --secondary: #8b5cf6; }
 .theme-elegant-night { --primary: #6366f1; --secondary: #14b8a6; }
 .theme-nature-calm { --primary: #16a34a; --secondary: #0891b2; }
+.theme-ocean-breeze { --primary: #3b82f6; --secondary: #14b8a6; }
+.theme-ruby-red { --primary: #ef4444; --secondary: #f97316; }
+.theme-golden-sand { --primary: #f59e0b; --secondary: #eab308; }
 
 /* ========== Base Styles ========== */
 * {
@@ -575,6 +578,41 @@ label {
     text-shadow: 0 0 10px var(--primary), 0 0 20px var(--secondary);
 }
 
+.char-item {
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(241, 245, 249, 0.8);
+    border: 2px solid transparent;
+    color: var(--text-gray);
+}
+
+.dark .char-item {
+    background: rgba(51, 65, 85, 0.8);
+    color: var(--text-dark);
+}
+
+.char-item:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.char-item.active {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: var(--shadow);
+    border-color: var(--secondary);
+}
+
 .slider-control {
     display: none;
 }
@@ -951,31 +989,6 @@ body.sidebar-open {
     transform: scale(1.1);
 }
 
-/* This section was duplicated and is now handled by .io-box and other new classes */
-
-/* ========== Modals ========== */
-.modal-content {
-    background: var(--bg-light);
-    padding: 2rem;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    width: 90%;
-    max-width: 500px;
-    text-align: center;
-    animation: fadeInUp 0.3s ease;
-}
-
-.dark .modal-content {
-    background: var(--bg-dark);
-    border: 1px solid rgba(71, 85, 105, 0.5);
-}
-
-.modal-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    color: var(--primary);
-}
 
 /* ========== Responsive Design ========== */
 @media (max-width: 768px) {
@@ -1064,7 +1077,8 @@ body.sidebar-open {
 
     .input-actions, .output-actions {
         top: 0.75rem;
-        right: 0.75rem;
+        left: 0.75rem; /* Always on the left */
+        right: auto; /* Remove right positioning */
         gap: 0.5rem;
     }
     
@@ -1115,8 +1129,6 @@ body.sidebar-open {
 .dark ::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, #64748b, #475569);
 }
-
-/* This section was duplicated and is now handled by .io-box and other new classes */
 
 /* ========== Modals ========== */
 .modal-content {

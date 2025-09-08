@@ -29,7 +29,7 @@ let appSettings = {
     themeColor: 'default',
     fontSize: '16px',
     fontFamily: 'system',
-    showNotifications: true,
+    showNotifications: false,
     autoSave: true,
     saveHistory: true,
     autoCopyEncodedEmoji: true, // تفعيل النسخ التلقائي
@@ -39,9 +39,11 @@ let appSettings = {
 };
 
 // Application Data
+const alphanumericChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.split('');
 let emojiList = [...defaultEmojis];
 let historyItems = [];
-let currentActiveEmoji = defaultEmojis[0];
+let useAlphanumeric = false;
+let currentActiveChar = defaultEmojis[0];
 
 const HEADER_MARKER = '\u061C'; // Arabic letter mark
 const SEPARATOR = '\u034F'; // Combining grapheme joiner
@@ -201,80 +203,32 @@ class AdvancedCompression {
     }
 }
 
-// ========== Enhanced Encryption System ==========
+// ========== Crypto Worker Setup ==========
+const cryptoWorker = new Worker('./assets/js/crypto-worker.js');
+let messageId = 0;
+const _workerPromises = {};
 
-class AdvancedEncryption {
-    static async generateKey(password, salt, iterations = 100000) {
-        const keyMaterial = await crypto.subtle.importKey(
-            'raw',
-            encoder.encode(password),
-            'PBKDF2',
-            false,
-            ['deriveKey']
-        );
-
-        return crypto.subtle.deriveKey(
-            {
-                name: 'PBKDF2',
-                salt: salt,
-                iterations: iterations,
-                hash: 'SHA-256'
-            },
-            keyMaterial,
-            { name: 'AES-GCM', length: 256 },
-            false,
-            ['encrypt', 'decrypt']
-        );
-    }
-
-    static async encrypt(data, password, strength = 'high') {
-        const iterations = {
-            'low': 50000,
-            'medium': 100000,
-            'high': 200000
-        }[strength] || 100000;
-
-        const salt = crypto.getRandomValues(new Uint8Array(32));
-        const iv = crypto.getRandomValues(new Uint8Array(16));
-        const key = await this.generateKey(password, salt, iterations);
-
-        const additionalData = encoder.encode('EmojiCipherPro-v2.1');
-
-        const encryptedData = await crypto.subtle.encrypt(
-            {
-                name: 'AES-GCM',
-                iv: iv,
-                additionalData: additionalData
-            },
-            key,
-            data
-        );
-
-        return {
-            encrypted: new Uint8Array(encryptedData),
-            salt: salt,
-            iv: iv,
-            iterations: iterations
-        };
-    }
-
-    static async decrypt(encryptedData, salt, iv, password, iterations = 100000) {
-        const key = await this.generateKey(password, salt, iterations);
-        const additionalData = encoder.encode('EmojiCipherPro-v2.1');
-
-        const decryptedData = await crypto.subtle.decrypt(
-            {
-                name: 'AES-GCM',
-                iv: iv,
-                additionalData: additionalData
-            },
-            key,
-            encryptedData
-        );
-
-        return new Uint8Array(decryptedData);
-    }
+function callWorker(type, payload) {
+    return new Promise((resolve, reject) => {
+        const id = messageId++;
+        _workerPromises[id] = { resolve, reject };
+        cryptoWorker.postMessage({ id, type, payload });
+    });
 }
+
+cryptoWorker.onmessage = (event) => {
+    const { id, status, payload } = event.data;
+    const promise = _workerPromises[id];
+
+    if (promise) {
+        if (status === 'success') {
+            promise.resolve(payload);
+        } else {
+            promise.reject(new Error(payload));
+        }
+        delete _workerPromises[id];
+    }
+};
 
 
 // ========== Enhanced CRC System ==========
@@ -339,11 +293,11 @@ async function encodeText() {
 
         let encryptionData = null;
         if (useEncryption && password) {
-            encryptionData = await AdvancedEncryption.encrypt(
-                payloadBytes,
-                password,
-                appSettings.encryptionStrength
-            );
+            encryptionData = await callWorker('encrypt', {
+                data: payloadBytes,
+                password: password,
+                strength: appSettings.encryptionStrength
+            });
             payloadBytes = encryptionData.encrypted;
         }
         
@@ -380,7 +334,8 @@ async function encodeText() {
         offset += separatorBytes.length;
         combinedData.set(payloadBytes, offset);
 
-        const result = encode(currentActiveEmoji, combinedData);
+        const base64Data = bytesToBase64(combinedData);
+        const result = encode(currentActiveChar, encoder.encode(base64Data));
 
         output.value = result;
         output.classList.add('has-content');
@@ -408,11 +363,13 @@ async function encodeText() {
 
 async function decodeSingleMessage(src, { showToasts = true } = {}) {
     try {
-        const combinedData = decode(src);
-        if (combinedData.length === 0) {
+        const base64Bytes = decode(src);
+        if (base64Bytes.length === 0) {
             if (showToasts) showToast('لم يتم العثور على بيانات مشفرة صالحة', 'error');
             return null;
         }
+        const base64Data = decoder.decode(base64Bytes);
+        const combinedData = base64ToBytes(base64Data);
 
         const markerBytes = encoder.encode(HEADER_MARKER);
         const separatorBytes = encoder.encode(SEPARATOR);
@@ -481,7 +438,13 @@ async function decodeSingleMessage(src, { showToasts = true } = {}) {
                 const iv = base64ToBytes(header.iv);
                 const iterations = header.iterations || 100000;
 
-                payloadBytes = await AdvancedEncryption.decrypt(payloadBytes, salt, iv, password, iterations);
+                payloadBytes = await callWorker('decrypt', {
+                    encryptedData: payloadBytes,
+                    salt: salt,
+                    iv: iv,
+                    password: password,
+                    iterations: iterations
+                });
             } catch (e) {
                 console.error(`Decryption error:`, e);
                 if (showToasts) showToast(`فشل في فك التشفير - قد تكون كلمة السر خاطئة`, 'error');
@@ -887,32 +850,51 @@ async function copyToClipboard(text = null) {
 
 // ========== Emoji Management ==========
 
-function renderEmojis() {
-    const emojiSlider = $('emojiSlider');
-    if (!emojiSlider) return;
+function renderCharacterList() {
+    const slider = $('emojiSlider');
+    if (!slider) return;
 
-    emojiSlider.innerHTML = '';
-    emojiList.forEach((emoji) => {
-        const emojiEl = document.createElement('div');
-        emojiEl.className = 'emoji-item';
-        emojiEl.textContent = emoji;
-        emojiEl.title = `استخدام ${emoji} كحاوية للتشفير`;
+    const list = useAlphanumeric ? alphanumericChars : emojiList;
+    const itemClass = useAlphanumeric ? 'char-item' : 'emoji-item';
+    const titlePrefix = useAlphanumeric ? 'استخدام' : 'استخدام';
 
-        if (emoji === currentActiveEmoji) {
-            emojiEl.classList.add('active');
+    slider.innerHTML = '';
+    list.forEach((char) => {
+        const charEl = document.createElement('div');
+        charEl.className = itemClass;
+        charEl.textContent = char;
+        charEl.title = `${titlePrefix} ${char} كحاوية للتشفير`;
+
+        if (char === currentActiveChar) {
+            charEl.classList.add('active');
         }
 
-        emojiEl.addEventListener('click', () => setActiveEmoji(emoji));
-        emojiSlider.appendChild(emojiEl);
+        charEl.addEventListener('click', () => setActiveChar(char));
+        slider.appendChild(charEl);
     });
+
+    if (!list.includes(currentActiveChar)) {
+        setActiveChar(list[0]);
+    }
+
+    // Hide/show relevant UI
+    const customEmojiContainer = document.querySelector('.custom-emoji-container');
+    if (customEmojiContainer) customEmojiContainer.style.display = useAlphanumeric ? 'none' : 'flex';
+
+    const emojiManagementTab = document.querySelector('.sidebar-tab[data-tab="emoji"]');
+    if (emojiManagementTab) emojiManagementTab.style.display = useAlphanumeric ? 'none' : 'flex';
+
+    if (useAlphanumeric && document.querySelector('.sidebar-tab[data-tab="emoji"].active')) {
+        switchTab('cipher');
+    }
 
     renderCustomEmojiList();
 }
 
-function setActiveEmoji(emoji) {
-    currentActiveEmoji = emoji;
-    document.querySelectorAll('.emoji-item').forEach(el => {
-        el.classList.toggle('active', el.textContent === emoji);
+function setActiveChar(char) {
+    currentActiveChar = char;
+    document.querySelectorAll('.emoji-item, .char-item').forEach(el => {
+        el.classList.toggle('active', el.textContent === char);
     });
 }
 
@@ -930,8 +912,8 @@ function addNewEmoji(emoji) {
     }
 
     emojiList.unshift(emoji);
-    setActiveEmoji(emoji);
-    renderEmojis();
+    setActiveChar(emoji);
+    renderCharacterList();
     saveEmojis();
     showToast('تم إضافة الإيموجي بنجاح');
 
@@ -949,11 +931,11 @@ function removeEmoji(emoji) {
 
     emojiList = emojiList.filter(e => e !== emoji);
 
-    if (currentActiveEmoji === emoji) {
-        setActiveEmoji(emojiList[0]);
+    if (currentActiveChar === emoji) {
+        setActiveChar(emojiList[0]);
     }
 
-    renderEmojis();
+    renderCharacterList();
     saveEmojis();
     showToast('تم حذف الإيموجي بنجاح');
 }
@@ -998,8 +980,8 @@ function renderCustomEmojiList() {
 function resetEmojiList() {
     if (confirm('هل أنت متأكد من رغبتك في إعادة تعيين قائمة الإيموجي؟')) {
         emojiList = [...defaultEmojis];
-        setActiveEmoji(defaultEmojis[0]);
-        renderEmojis();
+        setActiveChar(defaultEmojis[0]);
+        renderCharacterList();
         saveEmojis();
         showToast('تم إعادة تعيين قائمة الإيموجي');
     }
@@ -1235,7 +1217,10 @@ function changeColorTheme(themeColor) {
         'sunset-glow': 'توهج الغروب',
         'cyber-pink': 'سايبر وردي',
         'elegant-night': 'ليل أنيق',
-        'nature-calm': 'طبيعة هادئة'
+        'nature-calm': 'طبيعة هادئة',
+        'ocean-breeze': 'نسمة المحيط',
+        'ruby-red': 'أحمر ياقوتي',
+        'golden-sand': 'رمال ذهبية'
     };
 
     showToast(`تم تغيير الثيم إلى: ${themeNames[themeColor] || themeColor}`);
@@ -1284,7 +1269,7 @@ function loadEmojis() {
             emojiList = [...defaultEmojis];
         }
     }
-    currentActiveEmoji = emojiList[0];
+    currentActiveChar = emojiList[0];
 }
 
 function saveHistory() {
@@ -1355,7 +1340,7 @@ function setupDragAndDrop() {
             emojiList.splice(dropIndex, 0, removed);
 
             saveEmojis();
-            renderEmojis();
+            renderCharacterList();
             showToast('تم تحديث ترتيب الإيموجي', 'success');
         }
         return false;
@@ -1555,6 +1540,15 @@ function setupEventListeners() {
 
     if (resetEmojiBtn) resetEmojiBtn.addEventListener('click', resetEmojiList);
     if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', clearHistory);
+
+    const charSetSwitch = $('charSetSwitch');
+    if (charSetSwitch) {
+        charSetSwitch.addEventListener('change', (e) => {
+            useAlphanumeric = e.target.checked;
+            renderCharacterList();
+            showToast(useAlphanumeric ? 'تم التبديل إلى الحروف والأرقام' : 'تم التبديل إلى الإيموجي', 'info');
+        });
+    }
 
     // Password settings
     const useEncrypt = $('useEncrypt');
@@ -1903,7 +1897,7 @@ async function initApp() {
 
         applySettings();
 
-        renderEmojis();
+        renderCharacterList();
         renderHistory();
         updateCharCount();
 
