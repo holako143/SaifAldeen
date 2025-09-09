@@ -1,18 +1,20 @@
 // شفرينش - Service Worker
 // تطبيق تشفير النصوص المتقدم - عامل الخدمة للعمل بدون إنترنت
 
-const CACHE_NAME = 'shifrenish-v1.0.1';
+const CACHE_NAME = 'shifrenish-v1.0.2';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
   './assets/css/app.css',
   './assets/js/state.js',
+  './assets/js/storage.js',
   './assets/js/crypto.js',
   './assets/js/ui.js',
   './assets/js/history.js',
   './assets/js/char-management.js',
   './assets/js/qr.js',
+  './assets/js/actions.js',
   './assets/js/app.js',
   './assets/js/crypto-worker.js',
   './assets/fonts/fa-solid-900.woff2',
