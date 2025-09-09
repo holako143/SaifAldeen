@@ -4,13 +4,14 @@
 // Since this is a worker, we need to import any scripts we need.
 // The main app includes these in the HTML, but workers have their own scope.
 try {
+    // Use the local version of the Argon2 library
     self.importScripts(
-        'https://cdnjs.cloudflare.com/ajax/libs/argon2-browser/1.18.0/argon2-browser.min.js'
+        './libs/argon2-browser.min.js'
     );
 } catch (e) {
-    console.error('Crypto Worker: Failed to import Argon2 script.', e);
+    console.error('Crypto Worker: Failed to import local Argon2 script.', e);
     // We can't proceed without the library. Post an error back for any waiting calls.
-    self.postMessage({ id: -1, status: 'error', payload: 'Argon2 library failed to load in worker.' });
+    self.postMessage({ id: -1, status: 'error', payload: 'Local Argon2 library failed to load in worker.' });
 }
 
 
