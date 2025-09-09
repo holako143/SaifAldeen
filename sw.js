@@ -1,7 +1,7 @@
-// Emoji Cipher Pro - Service Worker
-// تطبيق تشفير الإيموجي - عامل الخدمة للعمل بدون إنترنت
+// شفرينش - Service Worker
+// تطبيق تشفير النصوص المتقدم - عامل الخدمة للعمل بدون إنترنت
 
-const CACHE_NAME = 'emoji-cipher-pro-v2.0.1';
+const CACHE_NAME = 'shifrenish-v1.0.0';
 const urlsToCache = [
   './',
   './index.html',

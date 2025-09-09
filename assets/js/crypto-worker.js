@@ -1,4 +1,4 @@
-// Emoji Cipher Pro - Crypto Worker
+// شفرينش - عامل التشفير
 // This worker handles heavy cryptographic operations (Argon2) to avoid blocking the main UI thread.
 
 // Since this is a worker, we need to import any scripts we need.

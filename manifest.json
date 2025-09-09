@@ -1,6 +1,6 @@
 {
-  "name": "Emoji Cipher Pro",
-  "short_name": "EmojiCipher",
+  "name": "شفرينش",
+  "short_name": "شفرينش",
   "description": "تطبيق تشفير النصوص داخل الإيموجي - يعمل بدون إنترنت",
   "version": "2.0.0",
   "start_url": "./index.html",
@@ -27,7 +27,7 @@
   ],
   "screenshots": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='1280' height='720' fill='%23f8fafc'/><rect x='40' y='40' width='1200' height='640' fill='white' rx='20' stroke='%23e2e8f0'/><text x='640' y='200' font-size='48' text-anchor='middle' fill='%23667eea'>Emoji Cipher Pro</text><text x='640' y='300' font-size='24' text-anchor='middle' fill='%2364748b'>تشفير النصوص داخل الإيموجي</text><rect x='340' y='400' width='600' height='200' fill='%23667eea' rx='10'/><text x='640' y='520' font-size='32' text-anchor='middle' fill='white'>🔒 تشفير آمن</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'><rect width='1280' height='720' fill='%23f8fafc'/><rect x='40' y='40' width='1200' height='640' fill='white' rx='20' stroke='%23e2e8f0'/><text x='640' y='200' font-size='48' text-anchor='middle' fill='%23667eea'>شفرينش</text><text x='640' y='300' font-size='24' text-anchor='middle' fill='%2364748b'>أداة تشفير نصوص متقدمة</text><rect x='340' y='400' width='600' height='200' fill='%23667eea' rx='10'/><text x='640' y='520' font-size='32' text-anchor='middle' fill='white'>🔒 تشفير آمن</text></svg>",
       "sizes": "1280x720",
       "type": "image/svg+xml",
       "form_factor": "wide"
