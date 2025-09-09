@@ -29,7 +29,7 @@ let appSettings = {
     themeColor: 'default',
     fontSize: '16px',
     fontFamily: 'system',
-    showNotifications: false,
+    showNotifications: false, // Default to false as per user request
     autoSave: true,
     saveHistory: true,
     autoCopyEncodedEmoji: true, // تفعيل النسخ التلقائي
@@ -39,8 +39,8 @@ let appSettings = {
 };
 
 // Application Data
-const alphanumericChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.split('');
 let emojiList = [...defaultEmojis];
+const alphanumericChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.split('');
 let historyItems = [];
 let useAlphanumeric = false;
 let currentActiveChar = defaultEmojis[0];
@@ -51,6 +51,70 @@ const SEPARATOR = '\u034F'; // Combining grapheme joiner
 // UTF-8 compatible encoder/decoder
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true });
+
+// ========== Crypto Worker Setup with Fallback ==========
+let cryptoWorker;
+let workerInitialized = false;
+const _workerPromises = {};
+let messageId = 0;
+
+try {
+    cryptoWorker = new Worker('./assets/js/crypto-worker.js');
+    workerInitialized = true;
+
+    cryptoWorker.onmessage = (event) => {
+        const { id, status, payload } = event.data;
+        const promise = _workerPromises[id];
+        if (promise) {
+            if (status === 'success') {
+                // The worker sends back a plain object, so we need to reconstruct the Uint8Array
+                if (payload.encrypted) {
+                    payload.encrypted = new Uint8Array(payload.encrypted);
+                }
+                if (payload.decrypted) {
+                    payload.decrypted = new Uint8Array(payload.decrypted);
+                }
+                promise.resolve(payload);
+            } else {
+                promise.reject(new Error(payload));
+            }
+            delete _workerPromises[id];
+        }
+    };
+
+    cryptoWorker.onerror = (error) => {
+        console.error('Crypto worker error:', error);
+        workerInitialized = false; // Disable worker for future operations
+        // Reject any pending promises
+        for (const id in _workerPromises) {
+            _workerPromises[id].reject(new Error('Crypto worker encountered a fatal error.'));
+            delete _workerPromises[id];
+        }
+    };
+
+    console.log('Crypto worker initialized successfully.');
+} catch (e) {
+    console.warn('Crypto worker failed to initialize. Falling back to synchronous encryption.', e);
+    workerInitialized = false;
+}
+
+function callWorker(type, payload) {
+    return new Promise((resolve, reject) => {
+        if (!workerInitialized) {
+            // This case should be handled by the calling function, which will use the fallback.
+            return reject(new Error('Worker not initialized'));
+        }
+        const id = messageId++;
+        _workerPromises[id] = { resolve, reject };
+
+        // Transferable objects for performance
+        const transferList = [];
+        if (payload.data && payload.data.buffer) transferList.push(payload.data.buffer);
+        if (payload.encryptedData && payload.encryptedData.buffer) transferList.push(payload.encryptedData.buffer);
+
+        cryptoWorker.postMessage({ id, type, payload }, transferList);
+    });
+}
 
 // ========== Unicode Variation Selector Encoding ==========
 
@@ -125,187 +189,108 @@ function decode(text) {
 
 class AdvancedCompression {
     static compress(text) {
-        if (!text || text.length === 0) return new Uint8Array([]);
-
+        if (!text) return new Uint8Array([]);
         try {
-            const textBytes = encoder.encode(text);
-            return this.simpleCompress(textBytes);
+            // Ensure pako is available
+            if (typeof pako === 'undefined') {
+                console.warn('Pako library not found, falling back to raw bytes.');
+                return encoder.encode(text);
+            }
+            return pako.deflate(text);
         } catch (error) {
-            console.error('Compression error:', error);
+            console.error('Pako compression error:', error);
+            // Fallback to just encoding the text if compression fails
             return encoder.encode(text);
         }
     }
 
     static decompress(data) {
         if (!data || data.length === 0) return '';
-
         try {
-            const decompressed = this.simpleDecompress(data);
-            return decoder.decode(decompressed);
+            // Ensure pako is available
+            if (typeof pako === 'undefined') {
+                console.warn('Pako library not found, falling back to standard decoder.');
+                return decoder.decode(data);
+            }
+            return pako.inflate(data, { to: 'string' });
         } catch (error) {
-            console.error('Decompression error:', error);
+            console.error('Pako decompression error:', error);
+            // Fallback to trying to decode the data directly
             try {
                 return decoder.decode(data);
             } catch (e) {
-                console.error('Fallback decode error:', e);
-                return '';
+                console.error('Final fallback decode error:', e);
+                return ''; // Return empty string if all fails
             }
         }
-    }
-
-    static simpleCompress(data) {
-        const result = [];
-        let i = 0;
-
-        while (i < data.length) {
-            const current = data[i];
-            let count = 1;
-
-            while (i + count < data.length && data[i + count] === current && count < 255) {
-                count++;
-            }
-
-            if (count > 3 || current === 255) {
-                result.push(255, count, current);
-            } else {
-                for (let j = 0; j < count; j++) {
-                    result.push(current);
-                }
-            }
-
-            i += count;
-        }
-
-        return new Uint8Array(result);
-    }
-
-    static simpleDecompress(data) {
-        const result = [];
-        let i = 0;
-
-        while (i < data.length) {
-            if (data[i] === 255 && i + 2 < data.length) {
-                const count = data[i + 1];
-                const value = data[i + 2];
-
-                for (let j = 0; j < count; j++) {
-                    result.push(value);
-                }
-
-                i += 3;
-            } else {
-                result.push(data[i]);
-                i++;
-            }
-        }
-
-        return new Uint8Array(result);
     }
 }
 
-// ========== Crypto Worker Setup with Fallback ==========
-let cryptoWorker;
-let workerInitialized = false;
-const _workerPromises = {};
-let messageId = 0;
+// ========== Enhanced Encryption System ==========
 
-try {
-    cryptoWorker = new Worker('./assets/js/crypto-worker.js');
-    workerInitialized = true;
-    cryptoWorker.onmessage = (event) => {
-        const { id, status, payload } = event.data;
-        const promise = _workerPromises[id];
-        if (promise) {
-            if (status === 'success') promise.resolve(payload);
-            else promise.reject(new Error(payload));
-            delete _workerPromises[id];
-        }
-    };
-    console.log('Crypto worker initialized successfully.');
-} catch (e) {
-    console.warn('Crypto worker failed to initialize. Falling back to synchronous encryption.', e);
-    workerInitialized = false;
-}
-
-function callWorker(type, payload) {
-    return new Promise((resolve, reject) => {
-        const id = messageId++;
-        _workerPromises[id] = { resolve, reject };
-        cryptoWorker.postMessage({ id, type, payload });
-    });
-}
-
-// ========== Synchronous Encryption Class (Fallback) ==========
-class AdvancedEncryption {
-    static async generateKey(password, salt, iterations = 100000) {
-        const keyMaterial = await crypto.subtle.importKey(
-            'raw',
-            encoder.encode(password),
-            'PBKDF2',
-            false,
-            ['deriveKey']
-        );
-
-        return crypto.subtle.deriveKey(
-            {
-                name: 'PBKDF2',
-                salt: salt,
-                iterations: iterations,
-                hash: 'SHA-256'
-            },
-            keyMaterial,
-            { name: 'AES-GCM', length: 256 },
-            false,
-            ['encrypt', 'decrypt']
-        );
+// Legacy PBKDF2 implementation for backwards compatibility
+class PBKDF2Encryption {
+    static async generateKey(password, salt, iterations) {
+        const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']);
+        return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
     }
 
-    static async encrypt(data, password, strength = 'high') {
-        const iterations = {
-            'low': 50000,
-            'medium': 100000,
-            'high': 200000
-        }[strength] || 100000;
-
-        const salt = crypto.getRandomValues(new Uint8Array(32));
-        const iv = crypto.getRandomValues(new Uint8Array(16));
+    static async decrypt(encryptedData, salt, iv, password, iterations, additionalData) {
         const key = await this.generateKey(password, salt, iterations);
+        // The AAD for the old version was a static string
+        const aad = encoder.encode('EmojiCipherPro-v2.1');
+        const decryptedData = await crypto.subtle.decrypt({ name: 'AES-GCM', iv, additionalData: aad }, key, encryptedData);
+        return new Uint8Array(decryptedData);
+    }
+}
 
-        const additionalData = encoder.encode('EmojiCipherPro-v2.1');
+// Current Argon2 implementation for the fallback (if worker fails)
+class AdvancedEncryption {
+    static async generateKey(password, salt, strength) {
+        if (typeof argon2 === 'undefined') {
+            console.error("Argon2 script not loaded. Cannot perform encryption fallback.");
+            throw new Error("Argon2 library not available.");
+        }
+        const strengthSettings = {
+            low: { time: 1, mem: 1024, hashLen: 32, parallelism: 1, type: argon2.ArgonType.Argon2id },
+            medium: { time: 2, mem: 2048, hashLen: 32, parallelism: 1, type: argon2.ArgonType.Argon2id },
+            high: { time: 3, mem: 4096, hashLen: 32, parallelism: 1, type: argon2.ArgonType.Argon2id }
+        };
+        const params = strengthSettings[strength] || strengthSettings.medium;
 
+        const argon2Result = await argon2.hash({
+            pass: password,
+            salt: salt,
+            time: params.time,
+            mem: params.mem,
+            hashLen: params.hashLen,
+            parallelism: params.parallelism,
+            type: params.type,
+        });
+
+        const keyBytes = argon2Result.hash.slice(0, 32);
+        return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+    }
+
+    static async encrypt(data, password, strength, salt, iv, additionalData) {
+        const key = await this.generateKey(password, salt, strength);
         const encryptedData = await crypto.subtle.encrypt(
-            {
-                name: 'AES-GCM',
-                iv: iv,
-                additionalData: additionalData
-            },
+            { name: 'AES-GCM', iv, additionalData, tagLength: 128 },
             key,
             data
         );
-
-        return {
-            encrypted: new Uint8Array(encryptedData),
-            salt: salt,
-            iv: iv,
-            iterations: iterations
-        };
+        return { encrypted: new Uint8Array(encryptedData) };
     }
 
-    static async decrypt(encryptedData, salt, iv, password, iterations = 100000) {
-        const key = await this.generateKey(password, salt, iterations);
-        const additionalData = encoder.encode('EmojiCipherPro-v2.1');
-
+    static async decrypt(encryptedData, salt, iv, password, strength, additionalData) {
+        const key = await this.generateKey(password, salt, strength);
         const decryptedData = await crypto.subtle.decrypt(
-            {
-                name: 'AES-GCM',
-                iv: iv,
-                additionalData: additionalData
-            },
+            { name: 'AES-GCM', iv, additionalData, tagLength: 128 },
             key,
             encryptedData
         );
-
-        return new Uint8Array(decryptedData);
+        // The worker returns a `decrypted` property, so we match that structure
+        return { decrypted: new Uint8Array(decryptedData) };
     }
 }
 
@@ -363,41 +348,46 @@ async function encodeText() {
         const useEncryption = $('useEncrypt')?.checked ?? false;
         const password = $('password')?.value ?? '';
 
-        let payloadBytes;
-        if (useCompression) {
-            payloadBytes = AdvancedCompression.compress(text);
-        } else {
-            payloadBytes = encoder.encode(text);
-        }
+        let payloadBytes = useCompression ? AdvancedCompression.compress(text) : encoder.encode(text);
 
-        let encryptionData = null;
-        const salt = crypto.getRandomValues(new Uint8Array(32));
-        const iv = crypto.getRandomValues(new Uint8Array(16));
-
-        let header = {
-            v: 2, ts: Date.now(), cmp: useCompression ? 1 : 0, enc: useEncryption && password ? 1 : 0,
-            crc: AdvancedCRC.calculate(text), oSize: encoder.encode(text).length,
-            salt: '', iv: '', iter: 0
+        // Use v:3 for Argon2, and include strength. 'iter' is deprecated for new messages.
+        const header = {
+            v: 3, // New version
+            ts: Date.now(),
+            cmp: useCompression ? 1 : 0,
+            enc: useEncryption && password ? 1 : 0,
+            oSize: encoder.encode(text).length,
+            salt: '',
+            iv: '',
+            strength: ''
         };
 
-        if (useEncryption && password) {
-            header.salt = bytesToBase64(salt);
-            header.iv = bytesToBase64(iv);
-            const headerBytesForAAD = encoder.encode(JSON.stringify(header));
+        if (header.enc) {
+            const salt = crypto.getRandomValues(new Uint8Array(32));
+            const iv = crypto.getRandomValues(new Uint8Array(16));
             const strength = appSettings.encryptionStrength;
 
-            if (workerInitialized) {
-                encryptionData = await callWorker('encrypt', { data: payloadBytes, password, strength, salt, iv, additionalData: headerBytesForAAD });
-            } else {
-                console.log('Using synchronous encryption fallback.');
-                encryptionData = await AdvancedEncryption.encrypt(payloadBytes, password, strength, salt, iv, headerBytesForAAD);
+            header.salt = bytesToBase64(salt);
+            header.iv = bytesToBase64(iv);
+            header.strength = strength;
+
+            // The header itself is used as Additional Authenticated Data (AAD)
+            const headerBytesForAAD = encoder.encode(JSON.stringify(header));
+
+            let encryptionResult;
+            try {
+                // Prioritize worker
+                encryptionResult = await callWorker('encrypt', { data: payloadBytes, password, strength, salt, iv, additionalData: headerBytesForAAD });
+            } catch (workerError) {
+                console.warn('Worker encryption failed, falling back to main thread.', workerError);
+                // Fallback to main thread if worker fails
+                encryptionResult = await AdvancedEncryption.encrypt(payloadBytes, password, strength, salt, iv, headerBytesForAAD);
             }
-            payloadBytes = encryptionData.encrypted;
-            header.iter = encryptionData.iterations;
+
+            payloadBytes = encryptionResult.encrypted;
         }
 
-        header.cSize = payloadBytes.length;
-
+        header.cSize = payloadBytes.length; // Final compressed/encrypted size
         const headerJson = JSON.stringify(header);
         const headerBytes = encoder.encode(headerJson);
 
@@ -424,7 +414,7 @@ async function encodeText() {
         autoGrowTextarea(output);
 
         setTimeout(() => {
-            updateStats(header.originalSize, header.compressedSize, text.length);
+            updateStats(header.oSize, header.cSize, text.length);
         }, 0);
         addToHistory(text, result, 'encode');
 
@@ -458,82 +448,78 @@ async function decodeSingleMessage(src, { showToasts = true } = {}) {
 
         let headerStart = -1;
         for (let j = 0; j <= combinedData.length - markerBytes.length; j++) {
-            let matchFound = true;
-            for (let k = 0; k < markerBytes.length; k++) {
-                if (combinedData[j + k] !== markerBytes[k]) {
-                    matchFound = false;
+            if (combinedData[j] === markerBytes[0]) { // Quick check
+                let match = true;
+                for (let k = 1; k < markerBytes.length; k++) {
+                    if (combinedData[j + k] !== markerBytes[k]) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match) {
+                    headerStart = j + markerBytes.length;
                     break;
                 }
             }
-            if (matchFound) {
-                headerStart = j + markerBytes.length;
-                break;
-            }
         }
 
-        if (headerStart === -1) {
-            if (showToasts) showToast('فشل في العثور على بداية البيانات الوصفية.', 'error');
-            return null;
-        }
+        if (headerStart === -1) throw new Error("Invalid message format: Missing header marker");
 
         let separatorStart = -1;
         for (let j = headerStart; j <= combinedData.length - separatorBytes.length; j++) {
-            let matchFound = true;
-            for (let k = 0; k < separatorBytes.length; k++) {
-                if (combinedData[j + k] !== separatorBytes[k]) {
-                    matchFound = false;
-                    break;
-                }
-            }
-            if (matchFound) {
-                separatorStart = j;
-                break;
+            if (combinedData[j] === separatorBytes[0]) { // Quick check
+                 separatorStart = j;
+                 break;
             }
         }
 
-        if (separatorStart === -1) {
-            if (showToasts) showToast('فشل في العثور على الفاصل بين البيانات الوصفية والمحتوى.', 'error');
-            return null;
-        }
+        if (separatorStart === -1) throw new Error("Invalid message format: Missing separator");
 
         const headerBytes = combinedData.slice(headerStart, separatorStart);
         let payloadBytes = combinedData.slice(separatorStart + separatorBytes.length);
+
         const header = JSON.parse(decoder.decode(headerBytes));
 
-        if (header.enc) {
+        if (header.enc || header.encryption) { // Support old `encryption` key
             const password = $('password')?.value ?? '';
             if (!password) {
                 if (showToasts) showToast(`النص مشفر بكلمة سر، يرجى إدخال كلمة السر`, 'error');
                 throw new Error("Password required");
             }
-            try {
-                const salt = base64ToBytes(header.salt);
-                const iv = base64ToBytes(header.iv);
-                const iterations = header.iter || 100000;
-                if (workerInitialized) {
-                    payloadBytes = await callWorker('decrypt', { encryptedData: payloadBytes, salt, iv, password, iterations, additionalData: headerBytes });
-                } else {
-                    payloadBytes = await AdvancedEncryption.decrypt(payloadBytes, salt, iv, password, iterations, headerBytes);
+            const salt = base64ToBytes(header.salt);
+            const iv = base64ToBytes(header.iv);
+
+            // Check version to decide decryption method
+            if (header.v === 3) { // New Argon2 version
+                const strength = header.strength;
+                if (!strength) throw new Error("Missing encryption strength parameter for decryption.");
+
+                let decryptionResult;
+                try {
+                    decryptionResult = await callWorker('decrypt', { encryptedData: payloadBytes, salt, iv, password, strength, additionalData: headerBytes });
+                } catch (workerError) {
+                    console.warn('Worker decryption failed, falling back to main thread.', workerError);
+                    decryptionResult = await AdvancedEncryption.decrypt(payloadBytes, salt, iv, password, strength, headerBytes);
                 }
-            } catch (e) {
-                console.error(`Decryption error:`, e);
-                if (showToasts) showToast(`فشل في فك التشفير - قد تكون كلمة السر خاطئة`, 'error');
-                return null;
+                payloadBytes = decryptionResult.decrypted;
+
+            } else { // Fallback for older PBKDF2 versions
+                console.warn("Decrypting a message with legacy PBKDF2 encryption.");
+                const iterations = header.iterations;
+                if (!iterations) throw new Error("Missing encryption iterations for older version.");
+
+                // The worker doesn't support legacy decryption, so we do it on the main thread.
+                payloadBytes = await PBKDF2Encryption.decrypt(payloadBytes, salt, iv, password, iterations, headerBytes);
             }
         }
 
-        let finalText;
-        if (header.compression) {
-            finalText = AdvancedCompression.decompress(payloadBytes);
-        } else {
-            finalText = decoder.decode(payloadBytes);
-        }
+        const finalText = (header.cmp || header.compression) ? AdvancedCompression.decompress(payloadBytes) : decoder.decode(payloadBytes);
 
         return {
             text: finalText,
             stats: {
-                originalSize: header.originalSize,
-                compressedSize: header.compressedSize
+                originalSize: header.oSize || header.originalSize,
+                compressedSize: header.cSize || header.compressedSize
             }
         };
 
@@ -918,72 +904,141 @@ async function copyToClipboard(text = null) {
     }
 }
 
-// ========== Character List Management ==========
+// ========== Emoji Management ==========
 
 function renderCharacterList() {
     const slider = $('emojiSlider');
     if (!slider) return;
+
     const list = useAlphanumeric ? alphanumericChars : emojiList;
     const itemClass = useAlphanumeric ? 'char-item' : 'emoji-item';
     slider.innerHTML = '';
-    list.forEach((char) => {
+    list.forEach(char => {
         const charEl = document.createElement('div');
         charEl.className = itemClass;
         charEl.textContent = char;
-        charEl.title = `استخدام ${char} كحاوية للتشفير`;
         if (char === currentActiveChar) charEl.classList.add('active');
         charEl.addEventListener('click', () => setActiveChar(char));
         slider.appendChild(charEl);
     });
-    if (!list.includes(currentActiveChar)) setActiveChar(list[0]);
-    $('customChar').parentElement.style.display = useAlphanumeric ? 'none' : 'flex';
-    document.querySelector('.sidebar-tab[data-tab="emoji"]').style.display = useAlphanumeric ? 'none' : 'flex';
-    if (useAlphanumeric && document.querySelector('.sidebar-tab[data-tab="emoji"].active')) switchTab('cipher');
+
+    // If the current active character is not in the new list, set the first one as active.
+    if (!list.includes(currentActiveChar)) {
+        setActiveChar(list[0]);
+    }
+
+    // Toggle visibility of the custom emoji UI based on the character set
+    const customEmojiUI = document.querySelector('.custom-emoji-container');
+    if (customEmojiUI) {
+        customEmojiUI.style.display = useAlphanumeric ? 'none' : 'flex';
+    }
+    const emojiTab = document.querySelector('.sidebar-tab[data-tab="emoji"]');
+    if(emojiTab) {
+        emojiTab.style.display = useAlphanumeric ? 'none' : 'flex';
+    }
+    const emojiManagementTab = $('emojiTab');
+    if (emojiManagementTab) {
+        const charSetSwitchInEmojiTab = emojiManagementTab.querySelector('#charSetSwitch');
+        if (charSetSwitchInEmojiTab) {
+            charSetSwitchInEmojiTab.parentElement.style.display = useAlphanumeric ? 'none' : 'block';
+        }
+    }
+
+
+    // If we switch to alphanumeric and the emoji tab is active, switch to the cipher tab
+    if (useAlphanumeric && document.querySelector('.sidebar-tab[data-tab="emoji"].active')) {
+        switchTab('cipher');
+    }
+
     renderCustomEmojiList();
 }
 
 function setActiveChar(char) {
     currentActiveChar = char;
-    document.querySelectorAll('.emoji-item, .char-item').forEach(el => el.classList.toggle('active', el.textContent === char));
+    document.querySelectorAll('.emoji-item, .char-item').forEach(el => {
+        el.classList.toggle('active', el.textContent === char);
+    });
 }
 
 function addNewEmoji(emoji) {
-    if (useAlphanumeric) { showToast('لا يمكن إضافة رموز في وضع الحروف والأرقام', 'warning'); return; }
-    if (!emoji || emoji.trim() === '' || emojiList.includes(emoji)) { showToast('إيموجي غير صالح أو موجود بالفعل', 'error'); return; }
-    emojiList.unshift(emoji.trim());
-    setActiveChar(emoji.trim());
+    if (useAlphanumeric) {
+        showToast('لا يمكن إضافة رموز جديدة في وضع الحروف والأرقام.', 'warning');
+        return;
+    }
+    if (!emoji || emoji.trim() === '') {
+        showToast('يرجى إدخال إيموجي صحيح', 'error');
+        return;
+    }
+
+    emoji = emoji.trim();
+
+    if (emojiList.includes(emoji)) {
+        showToast('هذا الإيموجي موجود بالفعل', 'error');
+        return;
+    }
+
+    emojiList.unshift(emoji);
+    setActiveChar(emoji);
     renderCharacterList();
     saveEmojis();
-    $('newEmoji').value = '';
-    $('customChar').value = '';
+    showToast('تم إضافة الإيموجي بنجاح');
+
+    const newEmojiInput = $('newEmoji');
+    const customCharInput = $('customChar');
+    if (newEmojiInput) newEmojiInput.value = '';
+    if (customCharInput) customCharInput.value = '';
 }
 
 function removeEmoji(emoji) {
-    if (emojiList.length <= 1) { showToast('يجب أن تبقى إيموجي واحدة على الأقل', 'error'); return; }
+    if (emojiList.length <= 1) {
+        showToast('يجب أن تبقى إيموجي واحدة على الأقل', 'error');
+        return;
+    }
+
     emojiList = emojiList.filter(e => e !== emoji);
-    if (currentActiveChar === emoji) setActiveChar(emojiList[0]);
+
+    if (currentActiveEmoji === emoji) {
+        setActiveChar(emojiList[0]);
+    }
+
     renderCharacterList();
     saveEmojis();
+    showToast('تم حذف الإيموجي بنجاح');
 }
 
 function renderCustomEmojiList() {
     const customEmojiList = $('customEmojiList');
     if (!customEmojiList) return;
+
     customEmojiList.innerHTML = '';
+
     if (emojiList.length === 0) {
         customEmojiList.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">لا توجد إيموجيات</p>';
         return;
     }
+
     emojiList.forEach((emoji, index) => {
         const emojiRow = document.createElement('div');
         emojiRow.className = 'emoji-manage-item';
         emojiRow.setAttribute('draggable', 'true');
         emojiRow.setAttribute('data-index', index);
+
         emojiRow.innerHTML = `
-            <div class="emoji-info"><i class="fas fa-grip-vertical drag-handle"></i><span class="emoji-char">${emoji}</span></div>
-            <button class="delete-emoji-btn" title="حذف الإيموجي"><i class="fas fa-trash"></i></button>
+            <div class="emoji-info">
+                <i class="fas fa-grip-vertical drag-handle"></i>
+                <span class="emoji-char">${emoji}</span>
+            </div>
+            <button class="delete-emoji-btn" title="حذف الإيموجي">
+                <i class="fas fa-trash"></i>
+            </button>
         `;
-        emojiRow.querySelector('.delete-emoji-btn').addEventListener('click', (e) => { e.stopPropagation(); removeEmoji(emoji); });
+
+        const deleteBtn = emojiRow.querySelector('.delete-emoji-btn');
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeEmoji(emoji);
+        });
+
         customEmojiList.appendChild(emojiRow);
     });
 }
@@ -1228,10 +1283,7 @@ function changeColorTheme(themeColor) {
         'sunset-glow': 'توهج الغروب',
         'cyber-pink': 'سايبر وردي',
         'elegant-night': 'ليل أنيق',
-        'nature-calm': 'طبيعة هادئة',
-        'ocean-breeze': 'نسمة المحيط',
-        'ruby-red': 'أحمر ياقوتي',
-        'golden-sand': 'رمال ذهبية'
+        'nature-calm': 'طبيعة هادئة'
     };
 
     showToast(`تم تغيير الثيم إلى: ${themeNames[themeColor] || themeColor}`);
@@ -1351,7 +1403,7 @@ function setupDragAndDrop() {
             emojiList.splice(dropIndex, 0, removed);
 
             saveEmojis();
-            renderCharacterList();
+            renderEmojis();
             showToast('تم تحديث ترتيب الإيموجي', 'success');
         }
         return false;
@@ -1552,11 +1604,6 @@ function setupEventListeners() {
     if (resetEmojiBtn) resetEmojiBtn.addEventListener('click', resetEmojiList);
     if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', clearHistory);
 
-    $('charSetSwitch').addEventListener('change', (e) => {
-        useAlphanumeric = e.target.checked;
-        renderCharacterList();
-    });
-
     // Password settings
     const useEncrypt = $('useEncrypt');
     const passwordSection = $('passwordSection');
@@ -1662,6 +1709,26 @@ function setupEventListeners() {
             applyTheme();
             saveSettings();
         });
+    }
+
+    // Character set switcher
+    const charSetSwitch = $('charSetSwitch');
+    if (charSetSwitch) {
+        // Also find the other switch in the other tab and sync them
+        const charSetSwitch2 = document.querySelector('#emoji-card #charSetSwitch');
+
+        const syncSwitches = (e) => {
+            const isChecked = e.target.checked;
+            useAlphanumeric = isChecked;
+            if (charSetSwitch) charSetSwitch.checked = isChecked;
+            if (charSetSwitch2) charSetSwitch2.checked = isChecked;
+            renderCharacterList();
+        };
+
+        charSetSwitch.addEventListener('change', syncSwitches);
+        if (charSetSwitch2) {
+            charSetSwitch2.addEventListener('change', syncSwitches);
+        }
     }
 
     // Slider controls
