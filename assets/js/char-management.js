@@ -100,9 +100,36 @@ function renderManagedList() {
         charRow.className = 'emoji-manage-item';
         charRow.setAttribute('draggable', 'true');
         charRow.setAttribute('data-index', index);
-        charRow.innerHTML = `<div class="emoji-info"><i class="fas fa-grip-vertical drag-handle"></i><span class="emoji-char">${char}</span></div><button class="delete-emoji-btn" title="حذف الرمز"><i class="fas fa-trash"></i></button>`;
-        const deleteBtn = charRow.querySelector('.delete-emoji-btn');
-        deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); removeChar(char); });
+
+        const emojiInfo = document.createElement('div');
+        emojiInfo.className = 'emoji-info';
+
+        const dragHandle = document.createElement('i');
+        dragHandle.className = 'fas fa-grip-vertical drag-handle';
+
+        const emojiChar = document.createElement('span');
+        emojiChar.className = 'emoji-char';
+        emojiChar.textContent = char;
+
+        emojiInfo.appendChild(dragHandle);
+        emojiInfo.appendChild(emojiChar);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-emoji-btn';
+        deleteBtn.title = 'حذف الرمز';
+
+        const trashIcon = document.createElement('i');
+        trashIcon.className = 'fas fa-trash';
+        deleteBtn.appendChild(trashIcon);
+
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeChar(char);
+        });
+
+        charRow.appendChild(emojiInfo);
+        charRow.appendChild(deleteBtn);
+
         customEmojiList.appendChild(charRow);
     });
 }
