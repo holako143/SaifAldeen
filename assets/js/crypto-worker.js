@@ -39,47 +39,32 @@ class AdvancedEncryption {
         );
     }
 
-    static async encrypt(data, password, strength = 'high') {
+    static async encrypt(data, password, strength = 'high', salt, iv, additionalData = new Uint8Array()) {
         const iterations = {
             'low': 50000,
             'medium': 100000,
             'high': 200000
         }[strength] || 100000;
 
-        const salt = crypto.getRandomValues(new Uint8Array(32));
-        const iv = crypto.getRandomValues(new Uint8Array(16));
         const key = await this.generateKey(password, salt, iterations);
 
-        const additionalData = encoder.encode('EmojiCipherPro-v2.1');
-
         const encryptedData = await crypto.subtle.encrypt(
-            {
-                name: 'AES-GCM',
-                iv: iv,
-                additionalData: additionalData
-            },
+            { name: 'AES-GCM', iv, additionalData },
             key,
             data
         );
 
         return {
             encrypted: new Uint8Array(encryptedData),
-            salt: salt,
-            iv: iv,
             iterations: iterations
         };
     }
 
-    static async decrypt(encryptedData, salt, iv, password, iterations = 100000) {
+    static async decrypt(encryptedData, salt, iv, password, iterations = 100000, additionalData = new Uint8Array()) {
         const key = await this.generateKey(password, salt, iterations);
-        const additionalData = encoder.encode('EmojiCipherPro-v2.1');
 
         const decryptedData = await crypto.subtle.decrypt(
-            {
-                name: 'AES-GCM',
-                iv: iv,
-                additionalData: additionalData
-            },
+            { name: 'AES-GCM', iv, additionalData },
             key,
             encryptedData
         );
@@ -98,7 +83,10 @@ self.onmessage = async (event) => {
             result = await AdvancedEncryption.encrypt(
                 payload.data,
                 payload.password,
-                payload.strength
+                payload.strength,
+                payload.salt,
+                payload.iv,
+                payload.additionalData
             );
         } else if (type === 'decrypt') {
             result = await AdvancedEncryption.decrypt(
@@ -106,7 +94,8 @@ self.onmessage = async (event) => {
                 payload.salt,
                 payload.iv,
                 payload.password,
-                payload.iterations
+                payload.iterations,
+                payload.additionalData
             );
         } else {
             throw new Error(`Unknown action type: ${type}`);

@@ -989,6 +989,31 @@ body.sidebar-open {
     transform: scale(1.1);
 }
 
+/* This section was duplicated and is now handled by .io-box and other new classes */
+
+/* ========== Modals ========== */
+.modal-content {
+    background: var(--bg-light);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    animation: fadeInUp 0.3s ease;
+}
+
+.dark .modal-content {
+    background: var(--bg-dark);
+    border: 1px solid rgba(71, 85, 105, 0.5);
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--primary);
+}
 
 /* ========== Responsive Design ========== */
 @media (max-width: 768px) {
@@ -1077,8 +1102,8 @@ body.sidebar-open {
 
     .input-actions, .output-actions {
         top: 0.75rem;
-        left: 0.75rem; /* Always on the left */
-        right: auto; /* Remove right positioning */
+        left: 0.75rem; /* Changed from right */
+        right: auto;
         gap: 0.5rem;
     }
     
@@ -1129,6 +1154,8 @@ body.sidebar-open {
 .dark ::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, #64748b, #475569);
 }
+
+/* This section was duplicated and is now handled by .io-box and other new classes */
 
 /* ========== Modals ========== */
 .modal-content {
