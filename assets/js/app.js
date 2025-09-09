@@ -239,7 +239,7 @@ async function initApp() {
         animateEmojiGrid();
     } catch (error) {
         console.error('Error initializing app:', error);
-        showToast('حدث خطأ أثناء تحميل التطبيق: ' + error.message, 'error', 5000);
+        showToast('حدث خطأ أثناء تحميل التطبيق', 'error');
     }
 }
 

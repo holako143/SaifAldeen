@@ -149,6 +149,34 @@ function toggleSidebar() {
     else openSidebar();
 }
 
+function switchTab(tabId) {
+    // Hide all tab content sections
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+
+    // Deactivate all sidebar tab buttons
+    document.querySelectorAll('.sidebar-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    // Show the selected tab content and activate its button
+    const newTabContent = $(`${tabId}Tab`);
+    if (newTabContent) {
+        newTabContent.classList.add('active');
+    }
+
+    const newTabButton = document.querySelector(`.sidebar-tab[data-tab="${tabId}"]`);
+    if (newTabButton) {
+        newTabButton.classList.add('active');
+    }
+
+    // Close the sidebar if it's open on mobile
+    if (document.body.classList.contains('sidebar-open')) {
+        closeSidebar();
+    }
+}
+
 function applyTheme() {
     // ... theme logic
 }
