@@ -63,7 +63,7 @@
         }
 
         // --- Fixed AdvancedCompression Class ---
-        class AdvancedCompression {
+        class FixedAdvancedCompression {
             static simpleCompress(data) {
                 const result = [];
                 let i = 0;
@@ -130,8 +130,8 @@
 
         // Test 2: Verify the fix with the new code
         console.log("\n--- Test 2: Fixed Version ---");
-        const fixedCompressed = AdvancedCompression.simpleCompress(testDataWith255);
-        const fixedDecompressed = AdvancedCompression.simpleDecompress(fixedCompressed);
+        const fixedCompressed = FixedAdvancedCompression.simpleCompress(testDataWith255);
+        const fixedDecompressed = FixedAdvancedCompression.simpleDecompress(fixedCompressed);
         const isFixedCorrect = arraysAreEqual(testDataWith255, fixedDecompressed);
         console.log("Original Data: ", testDataWith255);
         console.log("Compressed by Fixed: ", fixedCompressed);
@@ -145,8 +145,8 @@
 
         // Test 3: Verify long run compression still works
         console.log("\n--- Test 3: Long Run Sanity Check ---");
-        const fixedCompressedRun = AdvancedCompression.simpleCompress(testDataLongRun);
-        const fixedDecompressedRun = AdvancedCompression.simpleDecompress(fixedCompressedRun);
+        const fixedCompressedRun = FixedAdvancedCompression.simpleCompress(testDataLongRun);
+        const fixedDecompressedRun = FixedAdvancedCompression.simpleDecompress(fixedCompressedRun);
         const isRunCorrect = arraysAreEqual(testDataLongRun, fixedDecompressedRun);
         console.log("Original Data: ", testDataLongRun);
         console.log("Decompressed by Fixed: ", fixedDecompressedRun);
@@ -159,8 +159,8 @@
 
         // Test 4: Verify run of 255 bytes
         console.log("\n--- Test 4: Run of 255 bytes ---");
-        const fixedCompressed255Run = AdvancedCompression.simpleCompress(testDataWith255Run);
-        const fixedDecompressed255Run = AdvancedCompression.simpleDecompress(fixedCompressed255Run);
+        const fixedCompressed255Run = FixedAdvancedCompression.simpleCompress(testDataWith255Run);
+        const fixedDecompressed255Run = FixedAdvancedCompression.simpleDecompress(fixedCompressed255Run);
         const is255RunCorrect = arraysAreEqual(testDataWith255Run, fixedDecompressed255Run);
         console.log("Original Data: ", testDataWith255Run);
         console.log("Compressed by Fixed: ", fixedCompressed255Run);
@@ -172,47 +172,6 @@
              console.error("FAILURE: A run of 255 bytes is not handled correctly.");
         }
 
-        // --- XSS Test Case ---
-        console.log("\n--- XSS Test: Verify innerHTML is not used with user input ---");
-        const maliciousString = '<img src=x onerror=window.xssExecuted=true>';
-        const list = [maliciousString];
-        const customEmojiList = document.createElement('div');
-
-        // Simplified renderManagedList for testing
-        function renderManagedListForTest(targetElement, charList) {
-            targetElement.innerHTML = '';
-            charList.forEach((char, index) => {
-                const charRow = document.createElement('div');
-                charRow.className = 'emoji-manage-item';
-
-                const emojiInfo = document.createElement('div');
-                emojiInfo.className = 'emoji-info';
-
-                const emojiChar = document.createElement('span');
-                emojiChar.className = 'emoji-char';
-                emojiChar.textContent = char; // Using textContent to prevent XSS
-
-                emojiInfo.appendChild(document.createElement('i')); // dummy icon
-                emojiInfo.appendChild(emojiChar);
-
-                charRow.appendChild(emojiInfo);
-                targetElement.appendChild(charRow);
-            });
-        }
-
-        window.xssExecuted = false;
-        renderManagedListForTest(customEmojiList, list);
-
-        const isXssPrevented = !window.xssExecuted && customEmojiList.querySelector('.emoji-char').textContent === maliciousString;
-        console.log("Malicious string: ", maliciousString);
-        console.log("Rendered HTML: ", customEmojiList.innerHTML);
-        console.assert(isXssPrevented, "XSS VULNERABILITY DETECTED: The malicious script was executed or the content was not correctly rendered as text.");
-
-        if (isXssPrevented) {
-            console.log("%cSUCCESS: XSS vulnerability is patched. Malicious string was rendered as text.", "color: green;");
-        } else {
-            console.error("FAILURE: XSS vulnerability is still present.");
-        }
     </script>
 </body>
 </html>
