@@ -236,7 +236,12 @@ async function decodeSingleMessage(src, { showToasts = true } = {}) {
         if (separatorStart === -1) throw new Error("Invalid message format: Missing separator");
         const headerBytes = combinedData.slice(headerStart, separatorStart);
         let payloadBytes = combinedData.slice(separatorStart + separatorBytes.length);
-        const header = JSON.parse(decoder.decode(headerBytes));
+        let header;
+        try {
+            header = JSON.parse(decoder.decode(headerBytes));
+        } catch (e) {
+            throw new Error("تنسيق البيانات غير صالح. لا يمكن قراءة الـ header.");
+        }
         if (header.enc || header.encryption) {
             const password = $('password')?.value ?? '';
             if (!password) {
