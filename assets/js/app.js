@@ -28,12 +28,6 @@ function setupEventListeners() {
     $('copyBtn')?.addEventListener('click', () => copyToClipboard());
     $('shareBtn')?.addEventListener('click', shareContent);
 
-    // QR Code
-    $('qrExportBtn')?.addEventListener('click', exportAsQR);
-    $('qrImportBtn')?.addEventListener('click', startScanner);
-    $('closeQrModal')?.addEventListener('click', () => $('qrModal').classList.add('hidden'));
-    $('closeScannerModal')?.addEventListener('click', stopScanner);
-
     // Sidebar & Navigation
     $('menuToggle')?.addEventListener('click', toggleSidebar);
     $('closeSidebar')?.addEventListener('click', closeSidebar);

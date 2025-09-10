@@ -176,9 +176,6 @@
                         <button id="pasteBtn" class="icon-btn" title="لصق">
                             <i class="fas fa-paste"></i>
                         </button>
-                        <button id="qrImportBtn" class="icon-btn" title="استيراد من QR Code">
-                            <i class="fas fa-camera"></i>
-                        </button>
                         <button id="deleteBtn" class="icon-btn" title="حذف الكل">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -234,9 +231,6 @@
                         <div class="output-actions">
                             <button id="copyBtn" class="icon-btn" title="نسخ النتيجة">
                                 <i class="far fa-copy"></i>
-                            </button>
-                             <button id="qrExportBtn" class="icon-btn" title="تصدير كـ QR Code">
-                                <i class="fas fa-qrcode"></i>
                             </button>
                             <button id="shareBtn" class="icon-btn" title="مشاركة">
                                 <i class="fas fa-share-alt"></i>
@@ -470,28 +464,6 @@
         </div>
     </div>
 
-    <!-- QR Code Modal -->
-    <div id="qrModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 class="modal-title">QR Code النتيجة</h3>
-            <div id="qrcode-container" style="padding: 1rem; background: white; border-radius: 0.5rem; margin: 0 auto 1.5rem; display: inline-block;"></div>
-            <p style="margin-bottom: 1.5rem;">امسح الرمز باستخدام كاميرا هاتفك لنقل النص.</p>
-            <button id="closeQrModal" class="btn-secondary">إغلاق</button>
-        </div>
-    </div>
-
-    <!-- QR Scanner Modal -->
-    <div id="scannerModal" class="modal-overlay hidden">
-        <div class="modal-content">
-            <h3 class="modal-title">امسح QR Code</h3>
-            <div class="scanner-container">
-                <video id="scannerVideo" playsinline></video>
-                <div class="scanner-box"></div>
-            </div>
-            <p id="scannerMessage">وجّه الكاميرا نحو الرمز...</p>
-            <button id="closeScannerModal" class="btn-secondary">إلغاء</button>
-        </div>
-    </div>
 
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
@@ -500,8 +472,6 @@
     <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/argon2-browser/1.18.0/argon2-bundled.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
     <!-- Application Modules -->
     <script src="./assets/js/state.js"></script>
