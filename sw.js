@@ -4,43 +4,40 @@
 // This service worker enables offline functionality for the Shafresh application.
 // It caches all the necessary application assets.
 
-const CACHE_NAME = 'shafresh-cache-v2.1'; // Increment version to force update
+const CACHE_NAME = 'shafresh-cache-v2.2'; // Increment version to force update
 
-// List of all files that need to be cached for the app to work offline.
+// List of all local files that need to be cached for the app to work offline.
+// CDN resources are cached dynamically by the fetch handler.
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/manifest.json',
+    'index.html',
+    'manifest.json',
 
     // CSS
-    '/assets/css/app.css',
+    'assets/css/app.css',
 
-    // Fonts (ensure these paths are correct)
-    '/assets/fonts/fa-solid-900.woff2',
-    '/assets/fonts/fa-regular-400.woff2',
-    '/assets/fonts/fa-brands-400.woff2',
+    // Fonts
+    'assets/fonts/fa-solid-900.woff2',
+    'assets/fonts/fa-regular-400.woff2',
+    'assets/fonts/fa-brands-400.woff2',
 
     // Icons
-    '/assets/icons/icon-192x192.png',
-    '/assets/icons/icon-512x512.png',
+    'assets/icons/icon-192x192.png',
+    'assets/icons/icon-512x512.png',
 
-    // JavaScript Libraries (from CDN and local)
-    'https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-    'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js',
-    '/assets/js/libs/argon2-browser.min.js',
+    // JavaScript Libraries (local)
+    'assets/js/libs/argon2-bundled.min.js',
 
     // JavaScript Application Modules
-    '/assets/js/state.js',
-    '/assets/js/storage.js',
-    '/assets/js/crypto.js',
-    '/assets/js/ui.js',
-    '/assets/js/history.js',
-    '/assets/js/char-management.js',
-    '/assets/js/qr.js',
-    '/assets/js/actions.js',
-    '/assets/js/app.js',
-    '/assets/js/crypto-worker.js'
+    'assets/js/state.js',
+    'assets/js/storage.js',
+    'assets/js/crypto.js',
+    'assets/js/ui.js',
+    'assets/js/history.js',
+    'assets/js/char-management.js',
+    'assets/js/qr.js',
+    'assets/js/actions.js',
+    'assets/js/app.js',
+    'assets/js/crypto-worker.js'
 ];
 
 // --- Installation Event ---
@@ -80,7 +77,6 @@ self.addEventListener('activate', event => {
             );
         })
     );
-    //
     return self.clients.claim();
 });
 
@@ -96,16 +92,15 @@ self.addEventListener('fetch', event => {
     if (event.request.url.startsWith('https://')) {
         event.respondWith(
             caches.open(CACHE_NAME).then(cache => {
-                return cache.match(event.request).then(response => {
-                    const fetchPromise = fetch(event.request).then(networkResponse => {
-                        // If we get a valid response, cache it.
-                        if (networkResponse && networkResponse.status === 200) {
-                            cache.put(event.request, networkResponse.clone());
-                        }
-                        return networkResponse;
-                    });
-                    // Return the cached response if available, otherwise wait for the network.
-                    return response || fetchPromise;
+                return fetch(event.request).then(networkResponse => {
+                    // If we get a valid response, cache it.
+                    if (networkResponse && networkResponse.status === 200) {
+                        cache.put(event.request, networkResponse.clone());
+                    }
+                    return networkResponse;
+                }).catch(() => {
+                    // If the network fails, try to serve from cache.
+                    return cache.match(event.request);
                 });
             })
         );
@@ -115,7 +110,7 @@ self.addEventListener('fetch', event => {
             caches.match(event.request)
                 .then(response => {
                     // If the request is in the cache, return the cached response.
-                    // Otherwise, fetch it from the network.
+                    // Otherwise, fetch it from the network (and it will be cached by the install event).
                     return response || fetch(event.request);
                 })
         );

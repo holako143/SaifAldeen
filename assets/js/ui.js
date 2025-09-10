@@ -2,6 +2,8 @@
 // This file contains all functions related to DOM manipulation,
 // such as rendering lists, showing/hiding modals, and managing UI state.
 
+const $ = id => document.getElementById(id);
+
 function autoGrowTextarea(element) {
     if (!element) return;
     element.style.height = 'auto';
