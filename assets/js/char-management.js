@@ -130,3 +130,7 @@ function setupDragAndDrop() {
 function setupSliderDrag() {
     // ... slider drag logic ...
 }
+
+// Make functions globally available for event listeners in app.js
+window.renderCharacterList = renderCharacterList;
+window.renderManagedList = renderManagedList;

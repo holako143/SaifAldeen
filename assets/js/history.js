@@ -144,3 +144,9 @@ function importHistory(event) {
     reader.onerror = () => { showToast('فشل في قراءة الملف', 'error'); };
     reader.readAsText(file);
 }
+
+// Make functions globally available for event listeners in app.js
+window.renderHistory = renderHistory;
+window.importHistory = importHistory;
+window.exportHistory = exportHistory;
+window.clearHistory = clearHistory;

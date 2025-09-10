@@ -42,6 +42,26 @@ function setupEventListeners() {
     document.querySelectorAll('.sidebar-tab').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
 
     // Settings
+    $('toggleTheme')?.addEventListener('click', toggleTheme);
+    $('themeSelector')?.addEventListener('change', (e) => changeColorTheme(e.target.value));
+    $('fontSizeSelector')?.addEventListener('change', (e) => {
+        appSettings.fontSize = e.target.value;
+        changeFontSize(appSettings.fontSize);
+        saveSettings();
+    });
+    $('autoThemeToggle')?.addEventListener('change', (e) => {
+        appSettings.theme = e.target.checked ? 'auto' : 'light';
+        if (e.target.checked) $('darkThemeToggle').checked = false;
+        applyTheme();
+        saveSettings();
+    });
+    $('darkThemeToggle')?.addEventListener('change', (e) => {
+        appSettings.theme = e.target.checked ? 'dark' : 'light';
+        if (e.target.checked) $('autoThemeToggle').checked = false;
+        applyTheme();
+        saveSettings();
+    });
+
     $('batchModeToggle')?.addEventListener('change', (e) => {
         batchMode = e.target.checked;
         const inputLabel = document.querySelector('label[for="inputText"]');
@@ -54,14 +74,19 @@ function setupEventListeners() {
             if (outputLabel) outputLabel.textContent = 'النتيجة';
         }
     });
-    // ... other settings listeners
 
     // Character Management
+    const charSetSwitch = $('charSetSwitch');
+    if (charSetSwitch) {
+        charSetSwitch.addEventListener('change', (e) => {
+            useAlphanumeric = e.target.checked;
+            renderCharacterList();
+        });
+    }
     $('manageCharSetSwitch')?.addEventListener('change', (e) => {
         managingAlphanumeric = e.target.checked;
         renderManagedList();
     });
-    // ... other char management listeners
 
     // History
     $('importHistoryBtn')?.addEventListener('click', () => $('historyFileInput').click());

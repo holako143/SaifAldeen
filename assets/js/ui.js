@@ -178,11 +178,47 @@ function switchTab(tabId) {
 }
 
 function applyTheme() {
-    // ... theme logic
+    const body = document.body;
+    const toggleIcon = $('toggleTheme')?.querySelector('i');
+
+    if (appSettings.theme === 'dark' || (appSettings.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        body.classList.add('dark-mode');
+        if (toggleIcon) toggleIcon.className = 'fas fa-sun';
+        currentTheme = 'dark';
+    } else {
+        body.classList.remove('dark-mode');
+        if (toggleIcon) toggleIcon.className = 'fas fa-moon';
+        currentTheme = 'light';
+    }
+}
+
+function toggleTheme() {
+    const autoToggle = $('autoThemeToggle');
+    const darkToggle = $('darkThemeToggle');
+
+    if (appSettings.theme === 'light') appSettings.theme = 'dark';
+    else appSettings.theme = 'light';
+
+    if (autoToggle) autoToggle.checked = false;
+    if (darkToggle) darkToggle.checked = appSettings.theme === 'dark';
+
+    applyTheme();
+    saveSettings();
 }
 
 function changeColorTheme(themeColor) {
-    // ... theme change logic
+    const body = document.body;
+    body.className = body.className.replace(/theme-[\w-]+/g, '');
+    body.classList.add(`theme-${themeColor}`);
+    appSettings.themeColor = themeColor;
+    const themePreview = $('themePreview');
+    if(themePreview) {
+        // This is a bit of a hack to get the preview to update,
+        // since the variables are on the body tag.
+        themePreview.style.display = 'none';
+        setTimeout(() => themePreview.style.display = 'block', 0);
+    }
+    saveSettings();
 }
 
 function changeFontSize(fontSize) {
