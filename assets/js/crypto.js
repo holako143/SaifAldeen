@@ -85,19 +85,37 @@ function encode(emoji, bytes) {
     return encoded;
 }
 function decode(text) {
-    let decoded = [];
-    const chars = Array.from(text);
-    let startIndex = 0;
-    for (let i = 0; i < chars.length; i++) {
-        if (fromVariationSelector(chars[i].codePointAt(0)) === null) {
-            startIndex = i + 1;
-            break;
+    const allKnownChars = [...emojiList, ...alphanumericChars];
+    let startIndex = -1;
+    let foundChar = '';
+
+    // Find the last occurrence of any known container character
+    for (const knownChar of allKnownChars) {
+        const lastIndex = text.lastIndexOf(knownChar);
+        if (lastIndex > startIndex) {
+            startIndex = lastIndex;
+            foundChar = knownChar;
         }
     }
-    for (let i = startIndex; i < chars.length; i++) {
-        const byte = fromVariationSelector(chars[i].codePointAt(0));
-        if (byte !== null) decoded.push(byte);
-        else break;
+
+    if (startIndex === -1) {
+        return new Uint8Array([]); // No known container character found
+    }
+
+    // The actual payload starts after the container character
+    const payloadStartIndex = startIndex + foundChar.length;
+    const payload = text.substring(payloadStartIndex);
+    const chars = Array.from(payload);
+    let decoded = [];
+
+    for (const char of chars) {
+        const byte = fromVariationSelector(char.codePointAt(0));
+        if (byte !== null) {
+            decoded.push(byte);
+        } else {
+            // Stop if we encounter a character that's not a variation selector
+            break;
+        }
     }
     return new Uint8Array(decoded);
 }
