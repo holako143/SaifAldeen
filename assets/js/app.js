@@ -8,7 +8,6 @@ function applySettings() {
     document.body.classList.add(`theme-${appSettings.themeColor}`);
     const themeSelector = $('themeSelector');
     if (themeSelector) themeSelector.value = appSettings.themeColor;
-    // ... apply other settings ...
 }
 
 function resetApp() {
@@ -23,7 +22,6 @@ function setupEventListeners() {
     $('encodeBtn')?.addEventListener('click', encodeText);
     $('decodeBtn')?.addEventListener('click', decodeText);
     $('swapBtn')?.addEventListener('click', swapDynamicCards);
-    $('pasteBtn')?.addEventListener('click', pasteFromClipboard);
     $('deleteBtn')?.addEventListener('click', clearInput);
     $('copyBtn')?.addEventListener('click', () => copyToClipboard());
     $('shareBtn')?.addEventListener('click', shareContent);
@@ -113,7 +111,6 @@ async function initApp() {
         });
         console.log('شفرينش initialized successfully!');
         showToast('تم تحميل تطبيق شفرينش بنجاح', 'success');
-        animateEmojiGrid();
     } catch (error) {
         console.error('Error initializing app:', error);
         showToast('حدث خطأ أثناء تحميل التطبيق: ' + error.message, 'error', 5000);

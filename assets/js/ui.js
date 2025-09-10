@@ -222,15 +222,10 @@ function changeColorTheme(themeColor) {
 }
 
 function changeFontSize(fontSize) {
-    // ... font size change logic
-}
-
-function checkPasswordStrength() {
-    // ... password strength logic
-}
-
-function getStrengthName(strength) {
-    // ... strength name logic
+    const container = document.querySelector('.container');
+    if (container) {
+        container.style.fontSize = fontSize;
+    }
 }
 
 function clearInput() {
@@ -241,12 +236,4 @@ function clearInput() {
         showResultCard(false);
         showToast('تم مسح حقل الإدخال', 'info');
     }
-}
-
-async function pasteFromClipboard() {
-    // ... paste logic
-}
-
-function animateEmojiGrid() {
-    // ... animation logic
 }
