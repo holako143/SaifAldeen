@@ -7,7 +7,9 @@
 // --- Constants ---
 const SETTINGS_KEY = 'shafresh_settings';
 const HISTORY_KEY = 'shafresh_history';
-const CUSTOM_EMOJI_KEY = 'shafresh_custom_emojis';
+const EMOJI_LIST_KEY = 'shafresh_emoji_list';
+const ALPHANUMERIC_LIST_KEY = 'shafresh_alphanumeric_list';
+
 
 /**
  * Saves the current application settings to localStorage.
@@ -29,7 +31,6 @@ function loadSettings() {
     try {
         const savedSettings = localStorage.getItem(SETTINGS_KEY);
         if (savedSettings) {
-            // Merge saved settings with defaults to ensure new settings are not missed
             const parsedSettings = JSON.parse(savedSettings);
             appSettings = { ...appSettings, ...parsedSettings };
         }
@@ -63,12 +64,12 @@ function loadHistory() {
     } catch (e) {
         console.error("Error loading history from localStorage:", e);
         history = []; // Reset history on parsing error
-        showToast("فشل تحميل السجل. قد يكون تالفًا.", "error");
     }
 }
 
 /**
  * Adds a new item to the history and saves it.
+ * Note: This function no longer calls the UI update directly.
  * @param {string} type - The type of operation ('encode' or 'decode').
  * @param {string} original - The original text.
  * @param {string} result - The resulting text.
@@ -81,50 +82,71 @@ function addHistoryItem(type, original, result) {
         result,
         date: new Date().toISOString()
     };
-    // Add to the beginning of the array
     history.unshift(newItem);
-    // Limit history to 100 items to prevent excessive storage use
     if (history.length > 100) {
         history.pop();
     }
     saveHistory();
-    updateHistoryUI(); // This function is in history.js
 }
 
 /**
- * Clears the entire history from the state and localStorage.
+ * Saves the current list of emojis to localStorage.
  */
-function clearHistory() {
-    history = [];
-    saveHistory();
-    updateHistoryUI();
-    showToast("تم مسح السجل بنجاح.", "success");
-}
-
-/**
- * Saves the list of custom emojis to localStorage.
- */
-function saveCustomEmojis() {
+function saveEmojiList() {
     try {
-        localStorage.setItem(CUSTOM_EMOJI_KEY, JSON.stringify(customEmojiList));
+        localStorage.setItem(EMOJI_LIST_KEY, JSON.stringify(emojiList));
     } catch (e) {
-        console.error("Error saving custom emojis:", e);
+        console.error("Error saving emoji list:", e);
     }
 }
 
 /**
- * Loads the list of custom emojis from localStorage.
+ * Loads the list of emojis from localStorage.
  */
-function loadCustomEmojis() {
+function loadEmojiList() {
     try {
-        const savedEmojis = localStorage.getItem(CUSTOM_EMOJI_KEY);
+        const savedEmojis = localStorage.getItem(EMOJI_LIST_KEY);
         if (savedEmojis) {
-            customEmojiList = JSON.parse(savedEmojis);
+            emojiList = JSON.parse(savedEmojis);
+            if (!Array.isArray(emojiList) || emojiList.length === 0) {
+                emojiList = [...defaultEmojis];
+            }
         } else {
-            customEmojiList = [...DEFAULT_EMOJI_LIST]; // Initialize with defaults if none saved
+            emojiList = [...defaultEmojis];
         }
     } catch (e) {
-        console.error("Error loading custom emojis:", e);
-        customEmojiList = [...DEFAULT_EMOJI_LIST]; // Reset on error
+        console.error("Error loading emoji list:", e);
+        emojiList = [...defaultEmojis];
+    }
+}
+
+/**
+ * Saves the current list of alphanumeric characters to localStorage.
+ */
+function saveAlphanumericList() {
+    try {
+        localStorage.setItem(ALPHANUMERIC_LIST_KEY, JSON.stringify(alphanumericChars));
+    } catch (e) {
+        console.error("Error saving alphanumeric list:", e);
+    }
+}
+
+/**
+ * Loads the list of alphanumeric characters from localStorage.
+ */
+function loadAlphanumericList() {
+    try {
+        const savedChars = localStorage.getItem(ALPHANUMERIC_LIST_KEY);
+        if (savedChars) {
+            alphanumericChars = JSON.parse(savedChars);
+            if (!Array.isArray(alphanumericChars) || alphanumericChars.length === 0) {
+                alphanumericChars = [...defaultAlphanumericChars];
+            }
+        } else {
+            alphanumericChars = [...defaultAlphanumericChars];
+        }
+    } catch (e) {
+        console.error("Error loading alphanumeric list:", e);
+        alphanumericChars = [...defaultAlphanumericChars];
     }
 }

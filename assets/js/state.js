@@ -22,9 +22,10 @@ let appSettings = {
 
 // --- Core Data ---
 // These variables hold the application's core data structures.
-let emojiList = []; // Holds the list of available emojis/characters for encoding.
-let customEmojiList = []; // Holds user-added custom emojis.
+let emojiList = []; // Holds the list of available emojis for encoding.
+let alphanumericChars = []; // Holds the list of available alphanumeric characters.
 let history = []; // Holds a record of encoding/decoding operations.
+let currentActiveChar = '😀'; // The currently selected character for encoding.
 
 // --- UI State ---
 // These variables track the current state of the user interface.
@@ -37,20 +38,21 @@ let isBatchMode = false; // Flag for batch processing mode.
 let isDarkMode = false; // Tracks the current dark mode state.
 let currentTheme = 'default'; // Tracks the current theme.
 let currentFontSize = '16px'; // Tracks the current font size.
+let useAlphanumeric = false; // Flag to switch between emoji and alphanumeric modes.
+let managingAlphanumeric = false; // Flag for the character management tab.
 
 // --- Constants ---
 // These are constants used throughout the application.
 const EMOJI_VERSION = '15.0';
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.1.0';
 const GITHUB_URL = 'https://github.com/holako143/SaifAldeen';
 
-// Default emoji list (a small subset for fallback)
-const DEFAULT_EMOJI_LIST = [
+// Default lists
+const defaultEmojis = [
     '😀', '😂', '😍', '🤔', '😎', '😢', '👍', '👎', '❤️', '🔥', '🚀', '🌟', '🎉', '💡', '💻', '📱'
 ];
+const defaultAlphanumericChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.split('');
 
-// Default character set for alphanumeric encoding
-const ALPHANUMERIC_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
 // --- Flags ---
 // Boolean flags to control application flow.

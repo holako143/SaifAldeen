@@ -13,32 +13,31 @@ async function encodeText() {
         return;
     }
 
-    const text = document.getElementById('inputText').value;
-    const selectedChar = getSelectedChar(); // from char-management.js
-
+    const text = $('inputText').value;
     if (!text) {
         showToast("الرجاء إدخال نص لتشفيره.", "error");
         return;
     }
-    if (!selectedChar) {
+    if (!currentActiveChar) {
         showToast("الرجاء اختيار رمز حاوية.", "error");
         return;
     }
 
     isProcessing = true;
-    showLoading(true); // from ui.js
+    showLoading(true);
 
     try {
-        const result = await cryptoEncode(text, selectedChar); // from crypto.js
-        displayResult(result.encoded, result.stats); // from ui.js
-        addHistoryItem('encode', text, result.encoded); // from storage.js
+        const result = await cryptoEncode(text, currentActiveChar);
+        displayResult(result.encoded, result.stats);
+        addHistoryItem('encode', text, result.encoded);
+        updateHistoryUI(); // Manually update UI after adding item
         if (appSettings.autoCopyEncoded) {
             copyToClipboard(result.encoded, "تم نسخ النص المشفر بنجاح!");
         }
     } catch (error) {
         console.error("Encoding failed:", error);
         showToast(`فشل التشفير: ${error.message}`, "error");
-        displayResult("", {}); // Clear previous results
+        displayResult("", {});
     } finally {
         isProcessing = false;
         showLoading(false);
@@ -51,11 +50,11 @@ async function encodeText() {
  */
 async function decodeText() {
     if (isProcessing) {
-        showToast("عملية أخرى قيد التنفيذ، يرجى الانتظار.", "warning");
+        showToast("عملية أخرى قيد التنفيذ، يرى الانتظار.", "warning");
         return;
     }
 
-    const encodedText = document.getElementById('inputText').value;
+    const encodedText = $('inputText').value;
     if (!encodedText) {
         showToast("الرجاء إدخال نص لفك تشفيره.", "error");
         return;
@@ -65,16 +64,17 @@ async function decodeText() {
     showLoading(true);
 
     try {
-        const result = await cryptoDecode(encodedText); // from crypto.js
-        displayResult(result.decoded, result.stats, true); // from ui.js
-        addHistoryItem('decode', encodedText, result.decoded); // from storage.js
+        const result = await cryptoDecode(encodedText);
+        displayResult(result.decoded, result.stats, true);
+        addHistoryItem('decode', encodedText, result.decoded);
+        updateHistoryUI(); // Manually update UI after adding item
         if (appSettings.autoCopyDecoded) {
             copyToClipboard(result.decoded, "تم نسخ النص المفكوك بنجاح!");
         }
     } catch (error) {
         console.error("Decoding failed:", error);
         showToast(`فشل فك التشفير: ${error.message}`, "error");
-        displayResult("", {}); // Clear previous results
+        displayResult("", {});
     } finally {
         isProcessing = false;
         showLoading(false);
