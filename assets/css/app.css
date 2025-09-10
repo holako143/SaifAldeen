@@ -131,7 +131,7 @@ body {
     transition: all var(--transition);
 }
 
-body.dark-mode {
+.dark body {
     color: var(--text-dark);
     background: var(--bg-dark);
 }
@@ -153,7 +153,7 @@ body.dark-mode {
     box-shadow: var(--shadow);
 }
 
-body.dark-mode .navbar {
+.dark .navbar {
     background: rgba(30, 41, 59, 0.95);
     border-bottom: 1px solid rgba(51, 65, 85, 0.5);
 }
@@ -218,7 +218,7 @@ body.dark-mode .navbar {
     box-shadow: var(--shadow-lg);
 }
 
-body.dark-mode .nav-icon {
+.dark .nav-icon {
     background: rgba(51, 65, 85, 0.8);
     color: var(--text-dark);
 }
@@ -243,7 +243,7 @@ body.dark-mode .nav-icon {
     right: 0;
 }
 
-body.dark-mode .sidebar {
+.dark .sidebar {
     background: rgba(30, 41, 59, 0.95);
     border-left: 1px solid rgba(51, 65, 85, 0.5);
 }
@@ -258,7 +258,7 @@ body.dark-mode .sidebar {
     color: white;
 }
 
-body.dark-mode .sidebar-header {
+.dark .sidebar-header {
     border-bottom: 1px solid rgba(51, 65, 85, 0.5);
 }
 
@@ -293,8 +293,8 @@ body.dark-mode .sidebar-header {
     box-shadow: var(--shadow);
 }
 
-body.dark-mode .sidebar-tab:hover,
-body.dark-mode .sidebar-tab.active {
+.dark .sidebar-tab:hover,
+.dark .sidebar-tab.active {
     color: var(--primary);
     background: rgba(102, 126, 234, 0.2);
 }
@@ -310,7 +310,7 @@ body.dark-mode .sidebar-tab.active {
     border: 1px solid rgba(226, 232, 240, 0.5);
 }
 
-body.dark-mode .advanced-options {
+.dark .advanced-options {
     background: rgba(51, 65, 85, 0.8);
     border-color: rgba(71, 85, 105, 0.5);
 }
@@ -349,7 +349,7 @@ body.dark-mode .advanced-options {
     box-shadow: var(--shadow);
 }
 
-body.dark-mode .option-item label {
+.dark .option-item label {
     background: rgba(15, 23, 42, 0.8);
     border-color: rgba(71, 85, 105, 0.5);
     color: var(--text-dark);
@@ -392,7 +392,7 @@ body.dark-mode .option-item label {
     box-shadow: var(--shadow-lg);
 }
 
-body.dark-mode .card {
+.dark .card {
     background: rgba(30, 41, 59, 0.9);
     border: 1px solid rgba(51, 65, 85, 0.5);
 }
@@ -406,7 +406,7 @@ body.dark-mode .card {
     border-bottom: 1px solid rgba(226, 232, 240, 0.5);
 }
 
-body.dark-mode .card-header {
+.dark .card-header {
     border-bottom: 1px solid rgba(51, 65, 85, 0.5);
 }
 
@@ -425,8 +425,8 @@ body.dark-mode .card-header {
     font-weight: 600;
 }
 
-body.dark-mode .card-header h2,
-body.dark-mode .card-header h3 {
+.dark .card-header h2,
+.dark .card-header h3 {
     color: var(--text-dark);
 }
 
@@ -450,13 +450,13 @@ input:focus, textarea:focus, select:focus {
     background: rgba(255, 255, 255, 0.95);
 }
 
-body.dark-mode input, body.dark-mode textarea, body.dark-mode select {
+.dark input, .dark textarea, .dark select {
     background: rgba(15, 23, 42, 0.8);
     border-color: rgba(71, 85, 105, 0.5);
     color: var(--text-dark);
 }
 
-body.dark-mode input:focus, body.dark-mode textarea:focus, body.dark-mode select:focus {
+.dark input:focus, .dark textarea:focus, .dark select:focus {
     border-color: var(--primary);
     background: rgba(15, 23, 42, 0.95);
 }
@@ -468,7 +468,7 @@ label {
     color: var(--text-light);
 }
 
-body.dark-mode label {
+.dark label {
     color: var(--text-dark);
 }
 
@@ -524,7 +524,7 @@ body.dark-mode label {
     padding: 0;
 }
 
-body.dark-mode .emoji-slider-container {
+.dark .emoji-slider-container {
     background: rgba(51, 65, 85, 0.8);
     border-color: rgba(71, 85, 105, 0.5);
 }
@@ -596,7 +596,7 @@ body.dark-mode .emoji-slider-container {
     color: var(--text-gray);
 }
 
-body.dark-mode .char-item {
+.dark .char-item {
     background: rgba(51, 65, 85, 0.8);
     color: var(--text-dark);
 }
@@ -641,7 +641,7 @@ body.dark-mode .char-item {
     box-shadow: var(--shadow);
 }
 
-body.dark-mode .setting-item {
+.dark .setting-item {
     background: rgba(15, 23, 42, 0.8);
     border-color: rgba(71, 85, 105, 0.5);
 }
@@ -785,7 +785,7 @@ input:checked + .slider:before {
     background: rgba(0, 0, 0, 0.1);
 }
 
-body.dark-mode .toast {
+.dark .toast {
     background: rgba(30, 41, 59, 0.95);
     border: 1px solid rgba(71, 85, 105, 0.5);
     color: var(--text-dark);
@@ -921,7 +921,7 @@ body.sidebar-open {
     box-shadow: var(--shadow);
 }
 
-body.dark-mode .history-item {
+.dark .history-item {
     background: rgba(30, 41, 59, 0.8);
     border-color: rgba(71, 85, 105, 0.5);
 }
@@ -1004,7 +1004,7 @@ body.dark-mode .history-item {
     font-size: 0.9rem;
 }
 
-body.dark-mode .batch-result-item {
+.dark .batch-result-item {
     background: var(--bg-dark);
 }
 
@@ -1076,7 +1076,7 @@ body.dark-mode .batch-result-item {
     animation: fadeInUp 0.3s ease;
 }
 
-body.dark-mode .modal-content {
+.dark .modal-content {
     background: var(--bg-dark);
     border: 1px solid rgba(71, 85, 105, 0.5);
 }
@@ -1220,11 +1220,11 @@ body.dark-mode .modal-content {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary));
 }
 
-body.dark-mode ::-webkit-scrollbar-track {
+.dark ::-webkit-scrollbar-track {
     background: rgba(51, 65, 85, 0.5);
 }
 
-body.dark-mode ::-webkit-scrollbar-thumb {
+.dark ::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, #64748b, #475569);
 }
 
@@ -1335,7 +1335,7 @@ body.dark-mode ::-webkit-scrollbar-thumb {
     margin-bottom: 1.5rem;
 }
 
-body.dark-mode .cipher-card {
+.dark .cipher-card {
     background: rgba(30, 41, 59, 0.95);
     border-color: rgba(71, 85, 105, 0.5);
 }
@@ -1350,7 +1350,7 @@ body.dark-mode .cipher-card {
     background: rgba(255, 255, 255, 0.95);
 }
 
-body.dark-mode #input-card {
+.dark #input-card {
     background: rgba(15, 23, 42, 0.95);
 }
 
@@ -1406,8 +1406,8 @@ body.dark-mode #input-card {
     border: 1px solid var(--primary);
 }
 
-body.dark-mode .input-meta .char-count,
-body.dark-mode .input-meta .size-estimate {
+.dark .input-meta .char-count,
+.dark .input-meta .size-estimate {
     background-color: var(--bg-dark);
 }
 
@@ -1447,7 +1447,7 @@ body.dark-mode .input-meta .size-estimate {
     word-wrap: break-word; /* To break long words */
 }
 
-body.dark-mode .output-area {
+.dark .output-area {
     background: rgba(30, 41, 59, 0.95);
     border-color: rgba(71, 85, 105, 0.5);
     color: var(--text-dark);

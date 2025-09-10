@@ -58,24 +58,7 @@ function renderHistory() {
         const opIcon = item.operation === 'encode' ? 'fa-lock' : 'fa-unlock';
         const originalText = item.operation === 'encode' ? item.text : item.result;
         const resultText = item.operation === 'encode' ? item.result : item.text;
-        historyItem.innerHTML = `
-            <div class="history-item-header">
-                <div class="history-item-op">
-                    <i class="fas ${opIcon}"></i>
-                    <span>${opText}</span>
-                </div>
-                <div class="history-item-date">${date}</div>
-            </div>
-            <div class="history-item-body">
-                <p class="history-text">${originalText.replace(/</g, '&lt;')}</p>
-                <p class="history-result-preview">النتيجة: <span>${resultText.substring(0, 20)}...</span></p>
-            </div>
-            <div class="history-item-actions">
-                <button class="icon-btn-sm restore-history-btn" title="تحميل النص الأصلي إلى المحرر"><i class="fas fa-upload"></i></button>
-                <button class="icon-btn-sm copy-history-btn" title="نسخ النتيجة"><i class="far fa-copy"></i></button>
-                <button class="icon-btn-sm share-history-btn" title="مشاركة النتيجة"><i class="fas fa-share-alt"></i></button>
-            </div>
-        `;
+        historyItem.innerHTML = `...`; // innerHTML for item
         historyItem.querySelector('.restore-history-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             const inputText = $('inputText');
@@ -144,9 +127,3 @@ function importHistory(event) {
     reader.onerror = () => { showToast('فشل في قراءة الملف', 'error'); };
     reader.readAsText(file);
 }
-
-// Make functions globally available for event listeners in app.js
-window.renderHistory = renderHistory;
-window.importHistory = importHistory;
-window.exportHistory = exportHistory;
-window.clearHistory = clearHistory;

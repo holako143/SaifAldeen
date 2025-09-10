@@ -6,7 +6,7 @@
 try {
     // Use the local version of the Argon2 library
     self.importScripts(
-        'assets/js/libs/argon2-browser.min.js'
+        './libs/argon2-bundled.min.js'
     );
 } catch (e) {
     console.error('Crypto Worker: Failed to import local Argon2 script.', e);
